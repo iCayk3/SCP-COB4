@@ -128,7 +128,7 @@ public class ServiceRbx {
 				valorTotal = boletos.stream().mapToDouble(BoletosAbertos::valor).sum();
 			}
 
-			return new BoletosAbertos(valorTotal, null, null);
+			return new BoletosAbertos(valorTotal, null, null, null, null, null, null, null, null, null, null, null, null);
 		} catch (Exception exception) {
 			throw new RuntimeException("Erro ao processar integracao com RBX: " + exception.getMessage(), exception);
 		}
@@ -341,6 +341,10 @@ public class ServiceRbx {
 		);
 	}
 
+	public List<ClienteRbxDTO> buscarTodosClientes() {
+		return buscarClientesRbx(null);
+	}
+
 	private List<BoletosAbertos> buscarBoletosAbertos() {
 		String corpoBoletoAberto = """
 				{
@@ -358,6 +362,10 @@ public class ServiceRbx {
 				new TypeReference<RespostaAPI<BoletosAbertos>>() {
 				}
 		);
+	}
+
+	public List<BoletosAbertos> buscarTodosBoletosAbertos() {
+		return buscarBoletosAbertos();
 	}
 
 	private List<ClientesInadiplentesRbxDTO> buscarClientesInadiplentes() {
@@ -444,7 +452,9 @@ public class ServiceRbx {
 				cliente.uf(),
 				cliente.cep(),
 				converterIdEmNome(cliente.grupo()),
-				cliente.situacao()
+				cliente.situacao(),
+				cliente.cpfCnpj(),
+				cliente.email()
 		);
 	}
 

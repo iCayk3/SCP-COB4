@@ -1,6 +1,22 @@
 // CUSTOM ICON COMPONENT
 import duotone from '@/icons/duotone';
 export const navigation = [{
+  name: 'Verificação SGC',
+  Icon: duotone.Invoice,
+  children: [{
+    name: 'Visão geral',
+    path: '/dashboard/verificacao'
+  }, {
+    name: 'Processos e cobranças',
+    path: '/dashboard/cobrancas'
+  }, {
+    name: 'Regras de negócio',
+    path: '/dashboard/verificacao/regras'
+  }, {
+    name: 'Timeline e logs',
+    path: '/dashboard/verificacao/timeline'
+  }]
+}, {
   name: 'Dashboards',
   Icon: duotone.PersonChalkboard,
   children: [{

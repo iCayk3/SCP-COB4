@@ -19,6 +19,10 @@ const Logistics = lazy(() => import('@/pages/dashboard/logistics'));
 const Marketing = lazy(() => import('@/pages/dashboard/marketing'));
 const LMS = lazy(() => import('@/pages/dashboard/learning-management'));
 const JobManagement = lazy(() => import('@/pages/dashboard/job-management'));
+const Cobrancas = lazy(() => import('@/pages/cobrancas'));
+const Verificacao = lazy(() => import('@/pages/verificacao'));
+const Regras = lazy(() => import('@/pages/verificacao/regras'));
+const Timeline = lazy(() => import('@/pages/verificacao/timeline'));
 
 // USER LIST PAGES
 const AddNewUser = lazy(() => import('@/pages/users/add-new-user'));
@@ -97,6 +101,21 @@ export const DashboardRoutes = [{
   children: [{
     index: true,
     element: <Analytics />
+  }, {
+    path: 'cobrancas',
+    element: <Cobrancas />
+  }, {
+    path: 'verificacao',
+    children: [{
+      index: true,
+      element: <Verificacao />
+    }, {
+      path: 'regras',
+      element: <Regras />
+    }, {
+      path: 'timeline',
+      element: <Timeline />
+    }]
   }, {
     path: 'crm',
     element: <CRM />

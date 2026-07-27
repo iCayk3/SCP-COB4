@@ -4,6 +4,22 @@ export const navigations = [{
   type: 'label',
   label: 'Dashboard'
 }, {
+  name: 'Verificação SGC',
+  icon: duotone.Invoice,
+  children: [{
+    name: 'Visão geral',
+    path: '/dashboard/verificacao'
+  }, {
+    name: 'Processos e cobranças',
+    path: '/dashboard/cobrancas'
+  }, {
+    name: 'Regras de negócio',
+    path: '/dashboard/verificacao/regras'
+  }, {
+    name: 'Timeline e logs',
+    path: '/dashboard/verificacao/timeline'
+  }]
+}, {
   name: 'Analytics',
   icon: duotone.PersonChalkboard,
   children: [{

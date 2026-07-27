@@ -1,90 +1,97 @@
-import { useCallback, useState } from 'react';
-// MUI
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Grid from '@mui/material/Grid';
-import Drawer from '@mui/material/Drawer';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Alert, Box, Button, Card, CircularProgress, Drawer, Grid, Snackbar, Stack, TextField, Typography
+} from '@mui/material';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { styled } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import Add from '@mui/icons-material/Add';
-// CUSTOM COMPONENTS
-import PinChats from '../PinChats';
 import AllMessages from '../AllMessages';
 import Conversation from '../conversation';
-import { FlexBetween } from '@/components/flexbox';
-import { SearchInput } from '@/components/search-input';
+import ClientInfoPanel from '../ClientInfoPanel';
+import { buscarCobrancasParaAtendimento } from '@/services/cobrancas';
+import { gerarSimulacoesAtendimento } from '@/services/atendimentos';
 
-// STYLED COMPONENTS
-const StyledSearchInput = styled(SearchInput)(({
-  theme
-}) => ({
-  backgroundColor: theme.palette.action.selected,
-  border: `1px solid ${theme.palette.grey[200]}`,
-  ...theme.applyStyles('dark', {
-    border: `1px solid ${theme.palette.grey[600]}`
-  })
-}));
-const StyledIconButton = styled(IconButton)(({
-  theme
-}) => ({
-  backgroundColor: theme.palette.action.selected,
-  border: `1px solid ${theme.palette.divider}`
-}));
-const StyledCard = styled(Card)({
-  height: '100%',
-  paddingBottom: 8
-});
 export default function ChatPageView() {
+  const [processos, setProcessos] = useState([]);
+  const [selecionado, setSelecionado] = useState(null);
+  const [busca, setBusca] = useState('');
+  const [buscaAplicada, setBuscaAplicada] = useState('');
+  const [pagina, setPagina] = useState(0);
+  const [paginacao, setPaginacao] = useState({ totalElementos: 0, totalPaginas: 0, primeira: true, ultima: true });
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(true);
+  const [simulando, setSimulando] = useState(false);
+  const [aviso, setAviso] = useState('');
   const [openLeftDrawer, setOpenLeftDrawer] = useState(false);
   const downMd = useMediaQuery(theme => theme.breakpoints.down('md'));
-  const handleOpen = useCallback(() => {
-    setOpenLeftDrawer(true);
-  }, []);
 
-  // RECENT CONVERSATION LIST
-  const MESSAGE_CONTENT = <StyledCard>
-      <div className="p-3">
-        <FlexBetween mb={3}>
-          <Typography variant="body1" fontWeight={500} fontSize={18}>
-            Messages
-          </Typography>
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    try {
+      const dados = await buscarCobrancasParaAtendimento({ pagina, tamanho: 30, busca: buscaAplicada });
+      setProcessos(dados.itens);
+      setPaginacao(dados);
+      setSelecionado(atual => dados.itens.some(item => item.referencia === atual?.referencia)
+        ? atual : dados.itens[0] || null);
+    } catch (error) {
+      setErro(error.response?.data?.erro || 'Não foi possível carregar os processos.');
+    } finally {
+      setCarregando(false);
+    }
+  }, [pagina, buscaAplicada]);
 
-          <StyledIconButton size="small">
-            <Add />
-          </StyledIconButton>
-        </FlexBetween>
+  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    const temporizador = setTimeout(() => {
+      setPagina(0);
+      setBuscaAplicada(busca.trim());
+    }, 400);
+    return () => clearTimeout(temporizador);
+  }, [busca]);
+  const simular = async () => {
+    setSimulando(true);
+    setErro('');
+    try {
+      const resultado = await gerarSimulacoesAtendimento();
+      setAviso(`${resultado.conversasCriadas} conversa(s) criada(s); ${resultado.jaExistentes} já existia(m).`);
+      await carregar();
+    } catch (error) {
+      setErro(error.response?.data?.erro || 'Não foi possível gerar as conversas fictícias.');
+    } finally {
+      setSimulando(false);
+    }
+  };
+  const selecionar = processo => {
+    setSelecionado(processo);
+    setOpenLeftDrawer(false);
+  };
+  const lista = <Card sx={{ height: '100%', pb: 1 }}>
+      <Box p={3}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">Atendimentos</Typography>
+          <Button size="small" variant="outlined" onClick={simular} disabled={simulando}>
+            {simulando ? 'Gerando...' : 'Gerar simulações'}
+          </Button>
+        </Stack>
+        <TextField fullWidth size="small" value={busca} onChange={e => setBusca(e.target.value)}
+          placeholder="Buscar cliente, CPF ou processo" />
+      </Box>
+      {carregando ? <Box textAlign="center" py={4}><CircularProgress size={28} /></Box>
+        : <AllMessages processos={processos} selecionado={selecionado} onSelecionar={selecionar}
+            pagina={pagina} paginacao={paginacao} onMudarPagina={setPagina} />}
+    </Card>;
 
-        <StyledSearchInput placeholder="Search..." />
-      </div>
-
-      {/* PINNED ITEMS */}
-      <PinChats />
-
-      <Divider />
-
-      {/* ALL MESSAGES */}
-      <AllMessages />
-    </StyledCard>;
-  return <div className="pt-2 pb-4">
+  return <Box className="pt-2 pb-4">
+      {erro && <Alert severity="error" sx={{ mb: 2 }}>{erro}</Alert>}
+      <Snackbar open={Boolean(aviso)} autoHideDuration={6000} onClose={() => setAviso('')} message={aviso} />
       <Grid container spacing={3}>
         {downMd ? <Drawer anchor="left" open={openLeftDrawer} onClose={() => setOpenLeftDrawer(false)}>
-            <Box width={300} padding={1}>
-              {MESSAGE_CONTENT}
-            </Box>
-          </Drawer> : <Grid size={{
-        md: 4,
-        xs: 12
-      }}>{MESSAGE_CONTENT}</Grid>}
-
-        <Grid size={{
-        md: 8,
-        xs: 12
-      }}>
-          <Conversation handleOpen={handleOpen} />
+            <Box width={340} p={1}>{lista}</Box>
+          </Drawer> : <Grid size={{ lg: 3, md: 4, xs: 12 }}>{lista}</Grid>}
+        <Grid size={{ lg: 6, md: 8, xs: 12 }}>
+          <Conversation processo={selecionado} handleOpen={() => setOpenLeftDrawer(true)} />
+        </Grid>
+        <Grid size={{ lg: 3, md: 12, xs: 12 }}>
+          <ClientInfoPanel processo={selecionado} />
         </Grid>
       </Grid>
-    </div>;
+    </Box>;
 }

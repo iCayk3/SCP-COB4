@@ -18,6 +18,8 @@ public record ClienteRbxDTO(
 		@JsonAlias({"UF", "Uf", "uf"}) String uf,
 		@JsonAlias({"CEP", "Cep", "cep"}) String cep,
 		@JsonAlias({"Grupo", "grupo"}) String grupo,
-		@JsonAlias({"Situacao", "situacao"}) String situacao
+		@JsonAlias({"Situacao", "situacao"}) String situacao,
+		@JsonAlias({"CPF_CNPJ", "CpfCnpj", "cpfCnpj", "CPF", "Cpf", "cpf", "CNPJ", "Cnpj", "cnpj"}) String cpfCnpj,
+		@JsonAlias({"Email", "email", "E_mail", "e_mail"}) String email
 ) {
 }
