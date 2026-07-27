@@ -1,0 +1,8 @@
+/amplify
+node_modules
+# Ignore artifacts:
+build
+dist
+tools
+coverage
+.next
