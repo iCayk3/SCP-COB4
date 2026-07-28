@@ -20,8 +20,53 @@ export async function sincronizarCobrancasRbx() {
   return data;
 }
 
+export async function listarSincronizacoesRbx() {
+  const { data } = await api.get('/cobrancas/sincronizacoes-rbx');
+  return data;
+}
+
 export async function buscarProtocolosDoCliente(cpf) {
   const { data } = await api.get(`/cobrancas/clientes/${encodeURIComponent(cpf)}/protocolos`);
+  return data;
+}
+
+export async function listarMinhaFila(responsavelIdentificador) {
+  const { data } = await api.get(`/cobrancas/fila/${encodeURIComponent(responsavelIdentificador)}`);
+  return data;
+}
+
+export async function distribuirFila(payload) {
+  const { data } = await api.post('/cobrancas/fila/distribuir', payload);
+  return data;
+}
+
+export async function listarTarefas(responsavelIdentificador) {
+  const { data } = await api.get('/cobrancas/tarefas', { params: { responsavelIdentificador } });
+  return data;
+}
+
+export async function atualizarTarefa(id, status) {
+  const { data } = await api.put(`/cobrancas/tarefas/${id}`, { status });
+  return data;
+}
+
+export async function listarPromessas(referencia) {
+  const { data } = await api.get(`/cobrancas/${encodeURIComponent(referencia)}/promessas`);
+  return data;
+}
+
+export async function registrarPromessa(referencia, payload) {
+  const { data } = await api.post(`/cobrancas/${encodeURIComponent(referencia)}/promessas`, payload);
+  return data;
+}
+
+export async function registrarPagamento(referencia, payload) {
+  const { data } = await api.post(`/cobrancas/${encodeURIComponent(referencia)}/pagamentos`, payload);
+  return data;
+}
+
+export async function registrarEstorno(referencia, payload) {
+  const { data } = await api.post(`/cobrancas/${encodeURIComponent(referencia)}/estornos`, payload);
   return data;
 }
 

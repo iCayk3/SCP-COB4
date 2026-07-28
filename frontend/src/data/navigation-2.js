@@ -1,51 +1,51 @@
 import duotone from '@/icons/duotone';
 
 export const navigation = [{
-  name: 'Operação SGC',
+  name: 'Operacao SGC',
   Icon: duotone.Invoice,
   children: [{
-    name: 'Visão geral',
+    name: 'Visao geral',
     path: '/dashboard/verificacao'
   }, {
-    name: 'Processos e cobranças',
+    name: 'Processos e cobrancas',
     path: '/dashboard/cobrancas'
   }, {
     name: 'Chats',
     path: '/dashboard/chat'
   }, {
-    name: 'Regras de negócio',
+    name: 'Regras de negocio',
     path: '/dashboard/verificacao/regras'
   }, {
     name: 'Timeline e logs',
     path: '/dashboard/verificacao/timeline'
   }]
 }, {
-  name: 'Configurações SGC',
+  name: 'Configuracoes SGC',
   Icon: duotone.Settings,
   children: [{
-    name: 'Visão geral',
+    name: 'Visao geral',
     path: '/dashboard/configuracoes'
   }, {
-    name: 'Sincronização RBX',
+    name: 'Sincronizacao automatica RBX',
     path: '/dashboard/configuracoes/sincronizacao-rbx'
   }, {
-    name: 'Fluxos de cobrança',
+    name: 'Fluxos de cobranca',
     path: '/dashboard/configuracoes/fluxos'
   }, {
     name: 'Faixas de atraso',
     path: '/dashboard/configuracoes/faixas-atraso'
   }, {
-    name: 'Catálogos de motivos',
+    name: 'Catalogos de motivos',
     path: '/dashboard/configuracoes/catalogos-motivos'
   }, {
-    name: 'LGPD e retenção',
+    name: 'LGPD e retencao',
     path: '/dashboard/configuracoes/lgpd'
   }]
 }, {
   name: 'Planejamento SGC',
   Icon: duotone.ProjectChart,
   children: [{
-    name: 'Métricas mensais',
+    name: 'Metricas mensais',
     path: '/dashboard/planejamento/metricas'
   }, {
     name: 'Backlog priorizado',

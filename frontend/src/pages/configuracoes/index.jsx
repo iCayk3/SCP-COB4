@@ -3,14 +3,14 @@ import { Link } from 'react-router';
 
 const MODULOS = [
   {
-    titulo: 'Sincronização RBX',
-    descricao: 'Configure os dois horários diários de atualização automática da carteira.',
+    titulo: 'Sincronizacao automatica RBX',
+    descricao: 'Defina os dois horarios diarios da sincronizacao e ative ou desative a rotina automatica.',
     caminho: '/dashboard/configuracoes/sincronizacao-rbx',
-    categoria: 'Integração'
+    categoria: 'Integracao'
   },
   {
-    titulo: 'Fluxos de cobrança',
-    descricao: 'Configure estados, transições permitidas, ordem operacional e movimentos automáticos.',
+    titulo: 'Fluxos de cobranca',
+    descricao: 'Configure estados, transicoes permitidas, ordem operacional e movimentos automaticos.',
     caminho: '/dashboard/configuracoes/fluxos',
     categoria: 'Processo'
   },
@@ -18,28 +18,28 @@ const MODULOS = [
     titulo: 'Faixas de atraso',
     descricao: 'Defina os intervalos de dias, nomes e prioridades usados para classificar os protocolos.',
     caminho: '/dashboard/configuracoes/faixas-atraso',
-    categoria: 'Política'
+    categoria: 'Politica'
   },
   {
-    titulo: 'Catálogos de motivos',
-    descricao: 'Administre motivos de movimentação, encerramento, visita, retirada, jurídico e fechamento.',
+    titulo: 'Catalogos de motivos',
+    descricao: 'Administre motivos de movimentacao, encerramento, visita, retirada, juridico e fechamento.',
     caminho: '/dashboard/configuracoes/catalogos-motivos',
-    categoria: 'Padronização'
+    categoria: 'Padronizacao'
   },
   {
-    titulo: 'LGPD e retenção',
-    descricao: 'Documente dados pessoais, finalidade, base legal, acesso, retenção e destino final.',
+    titulo: 'LGPD e retencao',
+    descricao: 'Documente dados pessoais, finalidade, base legal, acesso, retencao e destino final.',
     caminho: '/dashboard/configuracoes/lgpd',
-    categoria: 'Governança'
+    categoria: 'Governanca'
   }
 ];
 
 export default function ConfiguracoesPage() {
   return <Stack spacing={3}>
     <Box>
-      <Typography variant="h4" fontWeight={700}>Configurações do SGC</Typography>
+      <Typography variant="h4" fontWeight={700}>Configuracoes do SGC</Typography>
       <Typography color="text.secondary">
-        Parâmetros que alteram o comportamento da cobrança, organizados por assunto.
+        Parametros que alteram o comportamento da cobranca, organizados por assunto.
       </Typography>
     </Box>
     <Grid container spacing={3}>
@@ -60,10 +60,10 @@ export default function ConfiguracoesPage() {
     </Grid>
     <Card variant="outlined">
       <CardContent>
-        <Typography variant="subtitle1" fontWeight={700}>Governança das configurações</Typography>
+        <Typography variant="subtitle1" fontWeight={700}>Governanca das configuracoes</Typography>
         <Typography color="text.secondary">
-          Alterações passam a valer para as próximas operações. Códigos usados em históricos permanecem
-          imutáveis; opções antigas devem ser inativadas para preservar a auditoria.
+          Alteracoes passam a valer para as proximas operacoes. Codigos usados em historicos permanecem
+          imutaveis; opcoes antigas devem ser inativadas para preservar a auditoria.
         </Typography>
       </CardContent>
     </Card>

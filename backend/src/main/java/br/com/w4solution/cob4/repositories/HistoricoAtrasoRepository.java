@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 public interface HistoricoAtrasoRepository extends JpaRepository<HistoricoAtraso, Long> {
 	Optional<HistoricoAtraso> findByBoletoReferencia(String boletoReferencia);
 	List<HistoricoAtraso> findAllByBoletoReferenciaIn(Collection<String> referencias);
+	List<HistoricoAtraso> findByContratoReferenciaAndCpfAndDataPagamentoIsNull(String contratoReferencia, String cpf);
 
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Query("update HistoricoAtraso h set h.cpf = :novoCpf, h.clienteNome = 'Titular anonimizado' where h.cpf = :cpf")

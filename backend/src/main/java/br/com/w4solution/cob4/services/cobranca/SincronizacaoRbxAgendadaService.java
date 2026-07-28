@@ -10,13 +10,13 @@ import java.time.*;
 @Service
 public class SincronizacaoRbxAgendadaService {
 	private static final Logger log = LoggerFactory.getLogger(SincronizacaoRbxAgendadaService.class);
-	private final CobrancaService cobrancaService;
+	private final SincronizacaoRbxMonitorService monitorService;
 	private final SincronizacaoRbxConfigService configService;
 	private final SincronizacaoRbxConfigRepository configRepository;
 
-	public SincronizacaoRbxAgendadaService(CobrancaService cobrancaService,
+	public SincronizacaoRbxAgendadaService(SincronizacaoRbxMonitorService monitorService,
 			SincronizacaoRbxConfigService configService, SincronizacaoRbxConfigRepository configRepository) {
-		this.cobrancaService = cobrancaService;
+		this.monitorService = monitorService;
 		this.configService = configService;
 		this.configRepository = configRepository;
 	}
@@ -41,7 +41,7 @@ public class SincronizacaoRbxAgendadaService {
 
 	private boolean sincronizar(String janela) {
 		try {
-			var resultado = cobrancaService.sincronizarInadimplentes();
+			var resultado = monitorService.sincronizar(janela);
 			log.info("Sincronização RBX da {} concluída: {} protocolo(s), {} boleto(s) novo(s)",
 					janela, resultado.cobrancasCriadas(), resultado.boletosCriados());
 			return true;

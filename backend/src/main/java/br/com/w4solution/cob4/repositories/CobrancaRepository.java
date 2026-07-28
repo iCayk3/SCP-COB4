@@ -20,6 +20,10 @@ public interface CobrancaRepository extends JpaRepository<Cobranca, Long> {
 			String cpf, Collection<Cobranca.Status> statuses);
 	List<Cobranca> findByCpfAgregadorInAndStatusIn(
 			Collection<String> cpfs, Collection<Cobranca.Status> statuses);
+	List<Cobranca> findByResponsavelIdentificadorAndStatusInOrderByPrioridadeDescAtualizadaEmAsc(
+			String responsavelIdentificador, Collection<Cobranca.Status> statuses);
+	List<Cobranca> findByStatusInAndResponsavelIdentificadorOrderByPrioridadeDescAtualizadaEmAsc(
+			Collection<Cobranca.Status> statuses, String responsavelIdentificador);
 	List<Cobranca> findAllByReferenciaIn(Collection<String> referencias);
 	Optional<Cobranca> findByReferencia(String referencia);
 

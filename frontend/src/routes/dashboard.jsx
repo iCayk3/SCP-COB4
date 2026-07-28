@@ -132,12 +132,6 @@ export const DashboardRoutes = [{
     }, {
       path: 'catalogos-motivos',
       element: <CatalogosMotivos />
-    }, {
-      path: 'lgpd',
-      element: <Lgpd />
-    }, {
-      path: 'sincronizacao-rbx',
-      element: <ConfiguracaoSincronizacao />
     }]
   }, {
     path: 'configuracoes',
@@ -153,6 +147,12 @@ export const DashboardRoutes = [{
     }, {
       path: 'catalogos-motivos',
       element: <CatalogosMotivos />
+    }, {
+      path: 'lgpd',
+      element: <Lgpd />
+    }, {
+      path: 'sincronizacao-rbx',
+      element: <ConfiguracaoSincronizacao />
     }]
   }, {
     path: 'planejamento',

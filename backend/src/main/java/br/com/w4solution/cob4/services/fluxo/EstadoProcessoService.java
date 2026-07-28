@@ -176,6 +176,9 @@ public class EstadoProcessoService {
 	}
 
 	private boolean permitidoPelaFaixa(Cobranca processo, String destino) {
+		if ("SEM_CONTATO".equals(processo.getEstadoFluxo()) && "VISITA".equals(destino)) {
+			return true;
+		}
 		return switch (destino) {
 			case "VISITA" -> processo.getFaixaAtraso().ordinal() >= Cobranca.FaixaAtraso.F4_AVANCADO.ordinal();
 			case "RETIRADA" -> processo.getFaixaAtraso().ordinal() >= Cobranca.FaixaAtraso.F5_CRITICO.ordinal();

@@ -46,6 +46,19 @@ const dataHora = new Intl.DateTimeFormat('pt-BR', {
   timeStyle: 'short'
 });
 
+function rotuloEstado(item) {
+  return (item.estadoFluxo || item.status || 'ABERTA').replaceAll('_', ' ');
+}
+
+function corEstado(item) {
+  const estado = item.estadoFluxo || item.status || '';
+  if (estado.includes('NEGOCIACAO') || estado.includes('PROMESSA') || estado === 'AGUARDANDO') return 'info';
+  if (estado.includes('SEM_CONTATO') || estado.includes('VISITA') || estado.includes('RETIRADA')) return 'warning';
+  if (estado.includes('ENCERR') || estado.includes('PAGA')) return 'success';
+  if (estado.includes('JURIDICO')) return 'error';
+  return 'default';
+}
+
 function contato(telefone, email) {
   if (!telefone && !email) return <Typography color="text.secondary">Não informado</Typography>;
   return <Stack spacing={0.25} minWidth={0}>
@@ -243,7 +256,9 @@ export default function CobrancasPage() {
                     <TableCell>
                       {item.atualizadaEm ? dataHora.format(new Date(item.atualizadaEm)) : '—'}
                     </TableCell>
-                    <TableCell><Chip size="small" color="warning" label="Em aberto" /></TableCell>
+                    <TableCell>
+                      <Chip size="small" color={corEstado(item)} label={rotuloEstado(item)} />
+                    </TableCell>
                     <TableCell align="center">
                       <Tooltip title="Abrir atendimento">
                         <IconButton size="small" color="primary" aria-label="Abrir atendimento"

@@ -10,44 +10,35 @@ import TaskAltRounded from '@mui/icons-material/TaskAltRounded';
 import { FlexBetween, FlexBox } from '@/components/flexbox';
 import { Scrollbar } from '@/components/scrollbar';
 import { StyledIconButton, ToggleBtn } from './styles';
-import { listarAtendimentos, listarTimeline, registrarAtendimento } from '@/services/atendimentos';
+import { listarAtendimentos, registrarAtendimento } from '@/services/atendimentos';
 import { useAuth } from '@/hooks/useAuth';
 
 const RESULTADOS = [
-  ['SEM_CONTATO', 'Sem contato'], ['ATENDEU', 'Atendeu'], ['NEGOCIACAO', 'Negociação'],
+  ['SEM_CONTATO', 'Sem contato'], ['ATENDEU', 'Atendeu'], ['NEGOCIACAO', 'Negociacao'],
   ['PROMESSA', 'Promessa'], ['PAGAMENTO', 'Pagamento'], ['VISITA', 'Visita'],
   ['SUPERVISOR', 'Supervisor'], ['ENCERRAMENTO', 'Encerramento']
 ];
+
+const rotulo = valor => valor?.replaceAll('_', ' ') || 'ABERTA';
 
 export default function Conversation({ handleOpen, processo }) {
   const { user } = useAuth();
   const [texto, setTexto] = useState('');
   const [mensagens, setMensagens] = useState([]);
   const [historico, setHistorico] = useState([]);
-  const [timeline, setTimeline] = useState([]);
   const [dialogo, setDialogo] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState(false);
-  const [form, setForm] = useState({
-    resultado: '', observacao: '', proximaAcao: ''
-  });
+  const [form, setForm] = useState({ resultado: '', observacao: '', proximaAcao: '' });
 
   useEffect(() => {
     setMensagens([]);
     setHistorico([]);
-    setTimeline([]);
     setErro('');
     if (processo) {
-      Promise.all([
-        listarAtendimentos(processo.referencia),
-        listarTimeline(processo.referencia)
-      ]).then(([atendimentos, eventos]) => {
-        setHistorico(atendimentos);
-        setTimeline(eventos);
-      }).catch(() => {
-        setErro('Não foi possível consultar o histórico deste processo.');
-      });
+      listarAtendimentos(processo.referencia).then(setHistorico)
+        .catch(() => setErro('Nao foi possivel consultar o historico deste processo.'));
     }
   }, [processo]);
 
@@ -61,7 +52,7 @@ export default function Conversation({ handleOpen, processo }) {
 
   const salvar = async () => {
     if (!form.resultado || !form.observacao.trim() || !form.proximaAcao.trim() || mensagens.length === 0) {
-      setErro('Informe resultado, observação, próxima ação e envie ao menos uma mensagem.');
+      setErro('Informe resultado, observacao, proxima acao e envie ao menos uma mensagem.');
       return;
     }
     setSalvando(true);
@@ -79,14 +70,13 @@ export default function Conversation({ handleOpen, processo }) {
         mensagens: mensagens.map(({ autor, mensagem }) => ({ autor, mensagem }))
       });
       setHistorico(atuais => [atendimento, ...atuais]);
-      listarTimeline(processo.referencia).then(setTimeline).catch(() => {});
       setMensagens([]);
       setForm({ resultado: '', observacao: '', proximaAcao: '' });
       setDialogo(false);
       setSucesso(true);
     } catch (error) {
       setErro(error.response?.data?.message || error.response?.data?.erro
-        || 'Não foi possível registrar o atendimento.');
+        || 'Nao foi possivel registrar o atendimento.');
     } finally {
       setSalvando(false);
     }
@@ -94,116 +84,108 @@ export default function Conversation({ handleOpen, processo }) {
 
   if (!processo) {
     return <Card sx={{ minHeight: 680, display: 'grid', placeItems: 'center' }}>
-        <Typography color="text.secondary">Selecione um processo para iniciar o atendimento.</Typography>
-      </Card>;
+      <Typography color="text.secondary">Selecione um processo para iniciar o atendimento.</Typography>
+    </Card>;
   }
 
   return <Card className="h-full" sx={{
-      height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden'
-    }}>
-      <FlexBetween padding={3} sx={{ flexShrink: 0 }}>
-        <FlexBox alignItems="center" gap={1.5}>
-          <Avatar>{processo.cliente?.charAt(0)}</Avatar>
-          <Box>
-            <Typography fontWeight={600}>{processo.cliente}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {processo.referencia} • {processo.telefone || 'Telefone não informado'}
-            </Typography>
-          </Box>
-        </FlexBox>
-        <Chip color="warning" size="small" label="Processo aberto" />
-      </FlexBetween>
-      <Divider />
-
-      <Box position="relative" sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <ToggleBtn screen="md" onClick={handleOpen}><ChevronRight sx={{ fontSize: 16, color: 'white' }} /></ToggleBtn>
-        <Scrollbar style={{ height: '100%' }}>
-          <Stack spacing={2} px={3} py={2} minHeight="100%">
-            {timeline.map(item => <Box key={`timeline-${item.id}`} borderLeft={3}
-              borderColor="primary.main" pl={2} py={0.5}>
-                <Typography variant="body2" fontWeight={600}>{item.evento.replaceAll('_', ' ')}</Typography>
-                <Typography variant="body2" color="text.secondary">{item.descricao}</Typography>
-                <Typography variant="caption" color="text.disabled">
-                  {new Date(item.criadoEm).toLocaleString('pt-BR')} • {item.autorNome}
-                </Typography>
-              </Box>)}
-            {historico.map(item => <Alert key={item.id} severity="info" icon={<TaskAltRounded />}>
-                <Typography variant="body2" fontWeight={600}>
-                  {RESULTADOS.find(([valor]) => valor === item.resultado)?.[1] || item.resultado}
-                </Typography>
-                <Stack spacing={1} my={1}>
-                  {item.mensagens?.map(mensagem => <Box key={mensagem.id}
-                    alignSelf={mensagem.autor === 'CLIENTE' ? 'flex-start' : 'flex-end'}
-                    bgcolor={mensagem.autor === 'CLIENTE' ? 'grey.200' : 'primary.main'}
-                    color={mensagem.autor === 'CLIENTE' ? 'text.primary' : 'primary.contrastText'}
-                    px={1.5} py={1} borderRadius={2} maxWidth="85%">
-                    <Typography variant="caption" fontWeight={600}>
-                      {mensagem.autor === 'CLIENTE' ? processo.cliente : item.operadorNome}
-                    </Typography>
-                    <Typography variant="body2">{mensagem.mensagem}</Typography>
-                  </Box>)}
-                </Stack>
-                <Typography variant="caption">
-                  {item.observacao} • Próxima ação: {item.proximaAcao}
-                </Typography>
-              </Alert>)}
-            {mensagens.map((item, indice) => <Box key={`${item.enviadaEm}-${indice}`} alignSelf="flex-end"
-              maxWidth={{ xs: '85%', md: '65%' }}>
-                <Typography variant="caption" color="text.secondary">Operador</Typography>
-                <Box bgcolor="primary.main" color="primary.contrastText" px={2} py={1.25} borderRadius={2}>
-                  <Typography variant="body2">{item.mensagem}</Typography>
-                </Box>
-              </Box>)}
-          </Stack>
-        </Scrollbar>
-      </Box>
-      <Divider />
-
-      {erro && <Alert severity="error" onClose={() => setErro('')}>{erro}</Alert>}
-      <Box px={3} py={2} sx={{ flexShrink: 0 }}>
-        <FlexBetween gap={2}>
-          <InputBase fullWidth value={texto} onChange={e => setTexto(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') enviar(); }}
-            placeholder="Digite a mensagem do atendimento..." />
-          <StyledIconButton onClick={enviar}><SendRounded /></StyledIconButton>
-        </FlexBetween>
-        <FlexBetween mt={2}>
-          <Typography variant="caption" color="text.secondary">
-            {mensagens.length} mensagem(ns) nesta conversa
+    height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden'
+  }}>
+    <FlexBetween padding={3} sx={{ flexShrink: 0 }}>
+      <FlexBox alignItems="center" gap={1.5}>
+        <Avatar>{processo.cliente?.charAt(0)}</Avatar>
+        <Box>
+          <Typography fontWeight={600}>{processo.cliente}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {processo.referencia} - {processo.telefone || 'Telefone nao informado'}
           </Typography>
-          <Button variant="contained" onClick={() => setDialogo(true)} disabled={!mensagens.length}>
-            Concluir atendimento
-          </Button>
-        </FlexBetween>
-      </Box>
+        </Box>
+      </FlexBox>
+      <Chip color="warning" size="small" label={rotulo(processo.estadoFluxo || processo.status)} />
+    </FlexBetween>
+    <Divider />
 
-      <Dialog open={dialogo} onClose={() => !salvando && setDialogo(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Resultado do atendimento</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2.5} mt={1}>
-            <FormControl fullWidth required>
-              <InputLabel>Resultado</InputLabel>
-              <Select label="Resultado" value={form.resultado}
-                onChange={e => setForm({ ...form, resultado: e.target.value })}>
-                {RESULTADOS.map(([valor, label]) => <MenuItem key={valor} value={valor}>{label}</MenuItem>)}
-              </Select>
-            </FormControl>
-            <TextField required multiline minRows={3} label="Observação" value={form.observacao}
-              onChange={e => setForm({ ...form, observacao: e.target.value })} />
-            <TextField required multiline minRows={2} label="Próxima ação" value={form.proximaAcao}
-              onChange={e => setForm({ ...form, proximaAcao: e.target.value })} />
-            <TextField label="Canal" value="Chat" disabled />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogo(false)} disabled={salvando}>Cancelar</Button>
-          <Button variant="contained" onClick={salvar} disabled={salvando}
-            startIcon={salvando ? <CircularProgress size={16} color="inherit" /> : <TaskAltRounded />}>
-            Registrar atendimento
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Snackbar open={sucesso} autoHideDuration={5000} onClose={() => setSucesso(false)}
-        message="Atendimento registrado no histórico" />
-    </Card>;
+    <Box position="relative" sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <ToggleBtn screen="md" onClick={handleOpen}><ChevronRight sx={{ fontSize: 16, color: 'white' }} /></ToggleBtn>
+      <Scrollbar style={{ height: '100%' }}>
+        <Stack spacing={2} px={3} py={2} minHeight="100%">
+          {historico.map(item => <Alert key={item.id} severity="info" icon={<TaskAltRounded />}>
+            <Typography variant="body2" fontWeight={600}>
+              {RESULTADOS.find(([valor]) => valor === item.resultado)?.[1] || item.resultado}
+            </Typography>
+            <Stack spacing={1} my={1}>
+              {item.mensagens?.map(mensagem => <Box key={mensagem.id}
+                alignSelf={mensagem.autor === 'CLIENTE' ? 'flex-start' : 'flex-end'}
+                bgcolor={mensagem.autor === 'CLIENTE' ? 'grey.200' : 'primary.main'}
+                color={mensagem.autor === 'CLIENTE' ? 'text.primary' : 'primary.contrastText'}
+                px={1.5} py={1} borderRadius={2} maxWidth="85%">
+                <Typography variant="caption" fontWeight={600}>
+                  {mensagem.autor === 'CLIENTE' ? processo.cliente : item.operadorNome}
+                </Typography>
+                <Typography variant="body2">{mensagem.mensagem}</Typography>
+              </Box>)}
+            </Stack>
+            <Typography variant="caption">
+              {item.observacao} - Proxima acao: {item.proximaAcao}
+            </Typography>
+          </Alert>)}
+          {mensagens.map((item, indice) => <Box key={`${item.enviadaEm}-${indice}`} alignSelf="flex-end"
+            maxWidth={{ xs: '85%', md: '65%' }}>
+            <Typography variant="caption" color="text.secondary">Operador</Typography>
+            <Box bgcolor="primary.main" color="primary.contrastText" px={2} py={1.25} borderRadius={2}>
+              <Typography variant="body2">{item.mensagem}</Typography>
+            </Box>
+          </Box>)}
+        </Stack>
+      </Scrollbar>
+    </Box>
+    <Divider />
+
+    {erro && <Alert severity="error" onClose={() => setErro('')}>{erro}</Alert>}
+    <Box px={3} py={2} sx={{ flexShrink: 0 }}>
+      <FlexBetween gap={2}>
+        <InputBase fullWidth value={texto} onChange={e => setTexto(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') enviar(); }}
+          placeholder="Digite a mensagem do atendimento..." />
+        <StyledIconButton onClick={enviar}><SendRounded /></StyledIconButton>
+      </FlexBetween>
+      <FlexBetween mt={2}>
+        <Typography variant="caption" color="text.secondary">
+          {mensagens.length} mensagem(ns) nesta conversa
+        </Typography>
+        <Button variant="contained" onClick={() => setDialogo(true)} disabled={!mensagens.length}>
+          Concluir atendimento
+        </Button>
+      </FlexBetween>
+    </Box>
+
+    <Dialog open={dialogo} onClose={() => !salvando && setDialogo(false)} fullWidth maxWidth="sm">
+      <DialogTitle>Resultado do atendimento</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2.5} mt={1}>
+          <FormControl fullWidth required>
+            <InputLabel>Resultado</InputLabel>
+            <Select label="Resultado" value={form.resultado}
+              onChange={e => setForm({ ...form, resultado: e.target.value })}>
+              {RESULTADOS.map(([valor, label]) => <MenuItem key={valor} value={valor}>{label}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <TextField required multiline minRows={3} label="Observacao" value={form.observacao}
+            onChange={e => setForm({ ...form, observacao: e.target.value })} />
+          <TextField required multiline minRows={2} label="Proxima acao" value={form.proximaAcao}
+            onChange={e => setForm({ ...form, proximaAcao: e.target.value })} />
+          <TextField label="Canal" value="Chat" disabled />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setDialogo(false)} disabled={salvando}>Cancelar</Button>
+        <Button variant="contained" onClick={salvar} disabled={salvando}
+          startIcon={salvando ? <CircularProgress size={16} color="inherit" /> : <TaskAltRounded />}>
+          Registrar atendimento
+        </Button>
+      </DialogActions>
+    </Dialog>
+    <Snackbar open={sucesso} autoHideDuration={5000} onClose={() => setSucesso(false)}
+      message="Atendimento registrado no historico" />
+  </Card>;
 }
