@@ -10,11 +10,19 @@ public class RegraNegocioService {
 	private static final String MODULO = "PROCESSOS";
 
 	public List<RegraNegocioDTO> listar() {
-		return java.util.stream.Stream.concat(java.util.stream.Stream.concat(List.of(
+		List<RegraNegocioDTO> processos = List.of(
 			regra("RN-001", "Unicidade de processo ativo",
-					"Nunca existirão dois processos ativos para a mesma fatura.", "Automática", "Crítica",
+					"Cada contrato possui somente um protocolo ativo por ciclo de inadimplência.", "Automática", "Crítica",
 					"Recebimento de inadimplência do RBX",
-					List.of("Reutilizar o processo ativo", "Vincular a fatura sem duplicação"), List.of()),
+					List.of("Reutilizar o protocolo do contrato", "Vincular títulos sem duplicação"), List.of()),
+			regra("RN-008", "Visão consolidada do cliente",
+					"O atendimento exibe todos os protocolos ativos do cliente e a soma dos valores.",
+					"Automática", "Alta", "Abertura do atendimento",
+					List.of("Listar protocolos por CPF", "Totalizar valores"), List.of()),
+			regra("RN-009", "Movimentação multiprotocolo",
+					"Protocolos do mesmo cliente podem ser movimentados conjuntamente de forma atômica, mantendo fluxos individuais.",
+					"Automática", "Crítica", "Negociação conjunta",
+					List.of("Validar todos antes da alteração", "Atualizar todos ou nenhum", "Auditar em cada timeline"), List.of()),
 			regra("RN-002", "Identificador único",
 					"Cada processo possuirá identificador único no padrão COB-AAAA-NNNNNN.", "Automática", "Alta",
 					"Criação do processo", List.of("Gerar identificador sequencial"), List.of()),
@@ -36,7 +44,31 @@ public class RegraNegocioService {
 			regra("RN-007", "Motivo de encerramento",
 					"Todo processo encerrado deverá informar o motivo.", "Validação", "Alta",
 					"Encerramento do processo", List.of("Exigir e registrar motivo", "Registrar na timeline"), List.of())
-		).stream(), regrasAtendimento().stream()), regrasTimeline().stream()).toList();
+		);
+		return java.util.stream.Stream.of(processos, regrasAtendimento(), regrasTimeline(), regrasFluxo())
+				.flatMap(List::stream).toList();
+	}
+
+	private List<RegraNegocioDTO> regrasFluxo() {
+		String modulo = "FLUXOS";
+		return List.of(
+			new RegraNegocioDTO(modulo, "RN-040", "Estado obrigatório",
+					"Todo cliente em cobrança deve possuir fluxo e estado operacional definidos.",
+					"Validação", "Crítica", "Criação ou movimentação do processo",
+					List.of("Atribuir fluxo padrão", "Rejeitar estado vazio"), List.of()),
+			new RegraNegocioDTO(modulo, "RN-041", "Transições controladas",
+					"O estado somente pode mudar por uma transição configurada no fluxo.",
+					"Validação", "Crítica", "Solicitação de mudança de estado",
+					List.of("Validar origem e destino", "Registrar novo evento na timeline"), List.of()),
+			new RegraNegocioDTO(modulo, "RN-042", "Cadência de contato",
+					"O WhatsApp deve ocorrer em até 30 minutos. Sem resposta, uma ligação é agendada após sete dias; o resultado sem contato move o protocolo.",
+					"Automática", "Alta", "Verificação periódica de ausência de resposta",
+					List.of("Criar tarefa de WhatsApp", "Agendar ligação", "Registrar timeline"), List.of()),
+			new RegraNegocioDTO(modulo, "RN-043", "Fluxos configuráveis",
+					"Operadores autorizados podem criar e editar estados e transições dos fluxos.",
+					"Manual", "Alta", "Configuração administrativa",
+					List.of("Validar estado inicial", "Preservar estados em uso"), List.of())
+		);
 	}
 
 	private List<RegraNegocioDTO> regrasTimeline() {

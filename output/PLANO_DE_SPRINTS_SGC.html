@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Roadmap de implementação, validações e testes do Sistema de Gestão da Cobrança.">
+  <title>SGC — Plano de Sprints</title>
+  <style>
+    :root {
+      --ink: #17211b;
+      --muted: #637067;
+      --paper: #f4f3ed;
+      --card: #fffef9;
+      --line: #dcded5;
+      --green: #145c3d;
+      --green-2: #217a55;
+      --lime: #cbea82;
+      --amber: #f2b544;
+      --blue: #5ca7b5;
+      --purple: #8c79ac;
+      --shadow: 0 14px 40px rgba(31, 50, 39, .08);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 90% 0, rgba(203, 234, 130, .28), transparent 26rem),
+        linear-gradient(180deg, #eef2e9 0, var(--paper) 34rem);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+
+    .hero {
+      padding: 64px 0 38px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 11px;
+      border: 1px solid rgba(20, 92, 61, .18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .58);
+      color: var(--green);
+      font-size: .77rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green-2);
+      box-shadow: 0 0 0 5px rgba(33, 122, 85, .12);
+    }
+
+    h1 {
+      max-width: 850px;
+      margin: 22px 0 16px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 500;
+      letter-spacing: -.065em;
+      line-height: .92;
+    }
+
+    h1 em { color: var(--green-2); font-style: normal; }
+
+    .lede {
+      max-width: 730px;
+      margin: 0;
+      color: #48564c;
+      font-size: clamp(1.05rem, 2vw, 1.28rem);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 38px;
+    }
+
+    .stat {
+      min-height: 132px;
+      padding: 20px;
+      border: 1px solid rgba(20, 92, 61, .13);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .62);
+      backdrop-filter: blur(10px);
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--green);
+      font-family: Georgia, serif;
+      font-size: 2.4rem;
+      line-height: 1;
+    }
+
+    .stat span { color: var(--muted); font-size: .9rem; }
+
+    .critical-note {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 15px;
+      margin: 12px 0 48px;
+      padding: 20px 22px;
+      border-radius: 18px;
+      background: var(--green);
+      color: white;
+      box-shadow: var(--shadow);
+    }
+
+    .critical-note .mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--lime);
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .critical-note strong { display: block; margin-bottom: 3px; }
+    .critical-note p { margin: 0; color: rgba(255,255,255,.78); }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: Georgia, serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 500;
+      letter-spacing: -.045em;
+      line-height: 1;
+    }
+
+    .section-head p { max-width: 560px; margin: 0; color: var(--muted); }
+
+    .phases {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 54px;
+    }
+
+    .phase {
+      position: relative;
+      min-height: 208px;
+      padding: 22px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .phase::after {
+      content: attr(data-number);
+      position: absolute;
+      right: -6px;
+      bottom: -37px;
+      color: rgba(20, 92, 61, .06);
+      font-family: Georgia, serif;
+      font-size: 9rem;
+      line-height: 1;
+    }
+
+    .phase-tag, .sprint-phase {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #e6ecdf;
+      color: var(--green);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .phase h3 { margin: 18px 0 9px; font-size: 1.15rem; }
+    .phase p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 20px;
+      padding: 12px;
+      border: 1px solid rgba(20, 92, 61, .14);
+      border-radius: 18px;
+      background: rgba(255, 254, 249, .88);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(31, 50, 39, .07);
+    }
+
+    .search {
+      flex: 1;
+      min-width: 180px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+      background: white;
+      color: var(--ink);
+    }
+
+    .search:focus { border-color: var(--green-2); box-shadow: 0 0 0 3px rgba(33, 122, 85, .12); }
+
+    .filters { display: flex; gap: 7px; overflow-x: auto; }
+    .filter, .expand-all {
+      white-space: nowrap;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: #526058;
+      font-size: .82rem;
+      font-weight: 750;
+    }
+
+    .filter.active { border-color: var(--green); background: var(--green); color: white; }
+    .expand-all { background: #e9efdf; color: var(--green); }
+
+    .sprint-list { display: grid; gap: 12px; padding-bottom: 58px; }
+
+    details.sprint {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: 0 5px 20px rgba(31, 50, 39, .045);
+      overflow: hidden;
+    }
+
+    details.sprint[open] { border-color: rgba(20, 92, 61, .34); box-shadow: var(--shadow); }
+
+    summary {
+      display: grid;
+      grid-template-columns: 66px minmax(0, 1fr) auto 32px;
+      align-items: center;
+      gap: 17px;
+      padding: 19px 21px;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .sprint-no {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 17px;
+      background: var(--green);
+      color: white;
+      font-family: Georgia, serif;
+      font-size: 1.45rem;
+    }
+
+    .sprint-title strong { display: block; font-size: 1.06rem; }
+    .sprint-title span { display: block; color: var(--muted); font-size: .86rem; }
+    .chevron { font-size: 1.5rem; transition: transform .2s ease; }
+    details[open] .chevron { transform: rotate(45deg); }
+
+    .sprint-body {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      border-top: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .workstream {
+      min-width: 0;
+      padding: 21px;
+      background: var(--card);
+    }
+
+    .workstream h4 {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 13px;
+      color: var(--green);
+      font-size: .78rem;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green-2); }
+    .validation .dot { background: var(--amber); }
+    .tests .dot { background: var(--blue); }
+
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 0 0 8px; color: #435047; font-size: .9rem; }
+    li::marker { color: var(--green-2); }
+
+    .dod {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 12px;
+      padding: 28px;
+      border-radius: 24px;
+      background: #18251e;
+      color: white;
+    }
+
+    .dod h2 { color: var(--lime); }
+    .dod p { color: rgba(255,255,255,.68); }
+    .dod ul { columns: 2; column-gap: 30px; }
+    .dod li { color: rgba(255,255,255,.82); break-inside: avoid; }
+
+    .decisions { padding: 56px 0; }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .decision {
+      padding: 17px 18px;
+      border-left: 4px solid var(--amber);
+      border-radius: 4px 15px 15px 4px;
+      background: #fff8e8;
+      color: #55462c;
+      font-size: .92rem;
+    }
+
+    footer {
+      padding: 28px 0 40px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .83rem;
+    }
+
+    .empty {
+      display: none;
+      padding: 32px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .stats, .phases { grid-template-columns: repeat(2, 1fr); }
+      .sprint-body { grid-template-columns: 1fr; }
+      .dod { grid-template-columns: 1fr; }
+      .toolbar { align-items: stretch; flex-direction: column; position: static; }
+      .filters { padding-bottom: 2px; }
+    }
+
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1180px); }
+      .hero { padding-top: 36px; }
+      .stats, .phases, .decision-grid { grid-template-columns: 1fr; }
+      .stat { min-height: auto; }
+      .section-head { align-items: start; flex-direction: column; }
+      summary { grid-template-columns: 50px minmax(0, 1fr) 26px; gap: 12px; padding: 15px; }
+      .sprint-no { width: 48px; height: 48px; border-radius: 14px; font-size: 1.2rem; }
+      .sprint-phase { display: none; }
+      .workstream { padding: 18px; }
+      .dod { padding: 22px; }
+      .dod ul { columns: 1; }
+    }
+
+    @media print {
+      body { background: white; }
+      .toolbar { display: none; }
+      details.sprint { break-inside: avoid; box-shadow: none; }
+      details.sprint .sprint-body { display: grid; }
+      .phase, .stat { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="shell">
+      <span class="eyebrow">SGC · Product Roadmap</span>
+      <h1>Da operação ao <em>produto.</em></h1>
+      <p class="lede">Plano executivo de implementação, validações e testes do Sistema de Gestão da Cobrança, construído a partir dos 11 volumes e do Product Blueprint.</p>
+      <div class="stats" aria-label="Resumo do planejamento">
+        <article class="stat"><strong>19</strong><span>sprints quinzenais, da descoberta ao lançamento</span></article>
+        <article class="stat"><strong>18</strong><span>semanas estimadas para o MVP operacional</span></article>
+        <article class="stat"><strong>38</strong><span>semanas estimadas para o roadmap completo</span></article>
+        <article class="stat"><strong>9</strong><span>jornadas críticas cobertas pela estratégia de testes</span></article>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <aside class="critical-note">
+      <span class="mark">!</span>
+      <div>
+        <strong>Decisão estrutural antes do desenvolvimento do núcleo</strong>
+        <p>É necessário definir se o processo de cobrança representa um cliente, contrato, título ou ciclo agregado de inadimplência. O documento usa essas quatro ideias, e a escolha afeta dados, workflow, RBX e indicadores.</p>
+      </div>
+    </aside>
+
+    <section aria-labelledby="fases">
+      <div class="section-head">
+        <h2 id="fases">Quatro marcos.<br>Uma evolução segura.</h2>
+        <p>O primeiro go-live acontece no fim da Sprint 8, com cobrança interna e grupo piloto. As capacidades seguintes entram de forma gradual e controlada.</p>
+      </div>
+      <div class="phases">
+        <article class="phase" data-number="1"><span class="phase-tag">Sprints 0–2</span><h3>Fundação & Método</h3><p>Operação validada, decisões estruturais, UX, arquitetura, segurança e plataforma.</p></article>
+        <article class="phase" data-number="2"><span class="phase-tag">Sprints 3–8</span><h3>MVP Operacional</h3><p>Cobrança interna ponta a ponta, workflow inicial, atendimento, negociação e RBX.</p></article>
+        <article class="phase" data-number="3"><span class="phase-tag">Sprints 9–12</span><h3>Gestão & Campo</h3><p>COC, regras parametrizáveis, comunicação omnicanal, visitas e retiradas.</p></article>
+        <article class="phase" data-number="4"><span class="phase-tag">Sprints 13–18</span><h3>Inteligência & SaaS</h3><p>Analytics, IA governada, multiempresa, multi-ERP, hardening e lançamento.</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="roadmap">
+      <div class="section-head">
+        <h2 id="roadmap">Roadmap detalhado</h2>
+        <p>Busque um tema, filtre por fase ou abra cada sprint para consultar entregas, validações e testes.</p>
+      </div>
+      <div class="toolbar" aria-label="Controles do roadmap">
+        <input class="search" id="search" type="search" placeholder="Buscar: RBX, segurança, IA, workflow..." aria-label="Buscar no roadmap">
+        <div class="filters" aria-label="Filtrar por fase">
+          <button class="filter active" data-filter="all">Todas</button>
+          <button class="filter" data-filter="fundacao">Fundação</button>
+          <button class="filter" data-filter="mvp">MVP</button>
+          <button class="filter" data-filter="gestao">Gestão</button>
+          <button class="filter" data-filter="inteligencia">Inteligência</button>
+        </div>
+        <button class="expand-all" id="expandAll">Expandir</button>
+      </div>
+      <div class="sprint-list" id="sprintList"></div>
+      <div class="empty" id="empty">Nenhuma sprint corresponde à sua busca.</div>
+    </section>
+
+    <section class="dod" aria-labelledby="pronto">
+      <div>
+        <span class="eyebrow">Qualidade contínua</span>
+        <h2 id="pronto">Definição de Pronto</h2>
+        <p>Uma história só é concluída quando negócio, engenharia, segurança e operação possuem evidências suficientes para sustentá-la.</p>
+      </div>
+      <ul>
+        <li>Critérios de aceitação aprovados pelo PO</li>
+        <li>Regras e permissões documentadas</li>
+        <li>Testes unitários e de integração passando</li>
+        <li>Fluxos críticos cobertos ponta a ponta</li>
+        <li>Logs, auditoria e métricas implementados</li>
+        <li>Sem vulnerabilidade crítica ou alta</li>
+        <li>Interface responsiva e acessível</li>
+        <li>API e operação documentadas</li>
+        <li>QA aprovado em homologação</li>
+        <li>Evidências vinculadas à história</li>
+      </ul>
+    </section>
+
+    <section class="decisions" aria-labelledby="decisoes">
+      <div class="section-head">
+        <h2 id="decisoes">Decisões antes<br>da Sprint 3</h2>
+        <p>Esses pontos precisam de resposta formal para proteger o núcleo do produto contra retrabalho.</p>
+      </div>
+      <div class="decision-grid">
+        <div class="decision">Qual é a unidade do processo: cliente, contrato, título ou ciclo de inadimplência?</div>
+        <div class="decision">Como pagamentos parciais, títulos múltiplos, estornos e reativações mudam o estado?</div>
+        <div class="decision">Qual sistema é mestre para telefone, endereço, equipamentos e situação contratual?</div>
+        <div class="decision">Quais SLAs contam horas úteis e quais eventos pausam o relógio?</div>
+        <div class="decision">Quais regras encerram retirada, jurídico e baixa administrativa?</div>
+        <div class="decision">Quais canais, fornecedores, consentimentos e políticas de opt-out serão adotados?</div>
+        <div class="decision">Quais são volume, concorrência, disponibilidade, retenção, RTO e RPO?</div>
+        <div class="decision">Quais fórmulas oficiais definem KPIs e o Índice de Saúde da Operação?</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">SGC — Plano de Sprints · Fonte: documento consolidado de 139 páginas, Volumes 1–11 e Product Blueprint.</div>
+  </footer>
+
+  <script>
+    const sprints = [
+      {
+        n: 0, phase: "fundacao", label: "Fundação", title: "Método SGC e baseline do produto",
+        goal: "Transformar as intenções do documento em uma operação aprovada e mensurável.",
+        build: ["Mapear rotina diária, papéis, RACI, distribuição da carteira e fechamento mensal.", "Definir faixas de atraso, cadência, descontos, visitas, retirada, jurídico e encerramento.", "Consolidar estados, eventos, filas, SLAs e motivos em um glossário único.", "Resolver a unidade do processo e definir MVP, métricas e backlog.", "Mapear LGPD, retenção, acesso, exportação e anonimização."],
+        validate: ["Workshops com diretoria, cobrança, supervisão, financeiro, campo, TI e privacidade.", "Simular 10 casos reais, inclusive pagamentos parciais e títulos múltiplos.", "Aprovação formal do mapa operacional e da matriz de responsabilidades."],
+        tests: ["Testes de mesa dos fluxos principais, alternativos e exceções.", "Matriz requisito → regra → processo → caso de teste.", "Saída: nenhuma decisão bloqueadora do MVP em aberto."]
+      },
+      {
+        n: 1, phase: "fundacao", label: "Fundação", title: "UX, arquitetura e contratos",
+        goal: "Produzir a base executável do produto sem antecipar funcionalidades.",
+        build: ["Protótipo de login, área de trabalho, Minha Fila, Cliente 360°, atendimento e supervisão.", "Modelo de domínio inicial e decisões arquiteturais.", "OpenAPI inicial e contrato do conector RBX.", "Modelo físico inicial, migrations e dados de teste.", "Threat model e classificação dos dados."],
+        validate: ["Usabilidade com operador, supervisor e financeiro.", "Revisão do modelo com negócio e integração RBX.", "Revisão de transações, concorrência e consistência eventual."],
+        tests: ["Contratos com mocks do RBX.", "Prova de conceito de evento idempotente e transição auditada.", "Saída: protótipo e contratos aprovados; riscos mitigados."]
+      },
+      {
+        n: 2, phase: "fundacao", label: "Fundação", title: "Plataforma, segurança e observabilidade",
+        goal: "Disponibilizar uma fundação implantável e segura.",
+        build: ["CI/CD e ambientes de desenvolvimento, teste e homologação.", "Banco, migrations, seeds, segredos e feature flags.", "Login, recuperação, bloqueio, sessão e preparação para MFA.", "RBAC, logs estruturados, métricas, health checks e auditoria.", "Backup, restauração e retenção."],
+        validate: ["Matriz de acesso de todos os perfis.", "Política de senha, sessão e segregação de funções.", "Ensaio de restauração de backup."],
+        tests: ["Autenticação, autorização, banco e migrations.", "Brute force, sessão expirada e acessos horizontal/vertical.", "Smoke test do deploy e teste de restauração."]
+      },
+      {
+        n: 3, phase: "mvp", label: "MVP", title: "SGC Core: processo, estados e timeline",
+        goal: "Implementar o núcleo de domínio.",
+        build: ["Processo com identificador, responsável, prioridade, SLA e origem.", "Máquina de estados e transições autorizadas.", "Timeline append-only e auditoria.", "Motivos de encerramento e bloqueio após encerramento.", "APIs de processo e timeline."],
+        validate: ["Revisar transições com operação.", "Validar pagamento e atendimento simultâneos.", "Confirmar a granularidade do processo definida na Sprint 0."],
+        tests: ["Todas as transições válidas e inválidas.", "Duplicidade, responsável obrigatório e timeline imutável.", "Concorrência, idempotência e reconstrução da trajetória."]
+      },
+      {
+        n: 4, phase: "mvp", label: "MVP", title: "Integração RBX e entrada da inadimplência",
+        goal: "Criar processos automaticamente a partir do ERP.",
+        build: ["Sincronizar clientes, contratos, títulos e pagamentos.", "Criar processo idempotente por título vencido.", "Sincronizações imediata, agendada e manual.", "Retry, fila de falhas, reprocessamento e painel técnico.", "Registrar origem, latência e resultado."],
+        validate: ["Reconciliação amostral SGC × RBX.", "Dados incompletos, títulos alterados, estornos e indisponibilidade.", "SLA de até 30 segundos para eventos imediatos."],
+        tests: ["Contrato/sandbox RBX e fixtures versionadas.", "Duplicidade, reordenação, replay, timeout e falha parcial.", "Carga inicial e reconciliação automática."]
+      },
+      {
+        n: 5, phase: "mvp", label: "MVP", title: "Filas, distribuição, SLA e tarefas",
+        goal: "Entregar automaticamente o próximo trabalho ao operador.",
+        build: ["Filas, carteira individual e distribuição inicial.", "Prioridade e ordenação.", "Tarefas, agenda, prazos, alertas e temporizadores.", "Redistribuição auditada pelo supervisor.", "Área de Trabalho e Minha Fila funcionais."],
+        validate: ["Cargas desiguais, ausência do operador e fila vazia.", "Prioridades com amostra real.", "Alertas, escalonamentos e redistribuição."],
+        tests: ["Determinismo e justiça da distribuição.", "Feriado, fuso, SLA pausado e tarefa vencida.", "E2E login → fila → processo e teste de carga."]
+      },
+      {
+        n: 6, phase: "mvp", label: "MVP", title: "Cliente 360° e atendimento",
+        goal: "Permitir atendimento completo e rápido em uma única jornada.",
+        build: ["Cliente 360° com cadastro, contratos, títulos, timeline, tarefas e agenda.", "Atendimento com canal, resultado, observação, duração, anexos e próxima ação.", "Ações rápidas e busca global.", "Atualização cadastral controlada conforme sistema mestre."],
+        validate: ["Usabilidade com meta de registro inferior a 30 segundos.", "Campos, linguagem e atalhos com operadores.", "Definição dos dados editáveis no SGC e no RBX."],
+        tests: ["Campos obrigatórios e próxima ação.", "Permissões e dados sensíveis.", "Anexos, E2E do primeiro contato e acessibilidade."]
+      },
+      {
+        n: 7, phase: "mvp", label: "MVP", title: "Promessas, negociação e aprovações",
+        goal: "Cobrir o ciclo de recuperação financeira.",
+        build: ["Promessa com valor, data, situação e retorno.", "Detecção de promessa cumprida ou quebrada via RBX.", "Simulador de juros, multa, desconto, entrada e parcelas.", "Aprovação de exceções e protocolo.", "Geração e envio de proposta."],
+        validate: ["Financeiro valida fórmulas, arredondamento e conciliação.", "Negócio valida alçadas e segregação.", "Simular pagamento total, parcial, antecipado, estorno e quebra."],
+        tests: ["Propriedades e limites dos cálculos monetários.", "Datas, feriados, parcelas e concorrência de aprovação.", "E2E negociar → aprovar → prometer → pagar/quebrar."]
+      },
+      {
+        n: 8, phase: "mvp", label: "MVP", title: "Pagamento, dashboard e piloto",
+        goal: "Fechar o fluxo ponta a ponta e colocá-lo em piloto controlado.",
+        build: ["Pagamento encerra promessa, agenda, tarefas e processo.", "Pagamento parcial, estorno e reabertura.", "Dashboard de carteira, recuperação, promessas, SLA e produtividade.", "Exportação mínima, carga piloto, runbook e treinamento."],
+        validate: ["UAT com grupo pequeno em paralelo ao processo atual.", "Reconciliação financeira e de estados.", "KPIs comparados com cálculo independente."],
+        tests: ["Regressão completa do MVP.", "Carga, pico, soak e resiliência.", "Disaster recovery e rollback; saída com aceite formal."]
+      },
+      {
+        n: 9, phase: "gestao", label: "Gestão", title: "COC e supervisão em tempo real",
+        goal: "Dar controle operacional ao supervisor.",
+        build: ["Painéis de operação, equipe, financeiro, alertas e integrações.", "Drill-down para processos.", "Status e inatividade de operadores.", "Alertas de SLA, promessa, fila e integração."],
+        validate: ["Sala de controle simulada.", "Frequência de atualização e defasagem.", "Fórmulas e semântica dos KPIs."],
+        tests: ["Agregações, filtros e permissões.", "Tempo real, desconexão e dados atrasados.", "Carga do COC sem degradar o transacional."]
+      },
+      {
+        n: 10, phase: "gestao", label: "Gestão", title: "Motor de regras e workflow configurável",
+        goal: "Permitir mudanças operacionais seguras sem alteração de código.",
+        build: ["Cadastro de estados, eventos, transições, ações, SLAs e regras.", "Validador de fluxo e simulação.", "Versionamento, publicação e rollback.", "Processos antigos preservam sua versão.", "Publicação com aprovação em quatro olhos."],
+        validate: ["Modelar duas políticas distintas.", "Comparar simulador com casos reais.", "Governança de alteração e impacto."],
+        tests: ["Compatibilidade entre versões.", "Proteção contra loops e limites de execução.", "Regressão derivada da matriz de transições."]
+      },
+      {
+        n: 11, phase: "gestao", label: "Gestão", title: "Comunicação omnicanal",
+        goal: "Centralizar mensagens e rastrear resultados.",
+        build: ["WhatsApp e e-mail; SMS/telefonia conforme fornecedor.", "Templates, envio, recebimento, status, anexos e opt-out.", "Timeline, reenvio e filas.", "Monitoramento de falhas e custos."],
+        validate: ["Templates, horários e linguagem.", "Consentimento, privacidade e retenção.", "Homologação com fornecedores."],
+        tests: ["Webhooks assinados e idempotentes.", "Rate limit, indisponibilidade e status fora de ordem.", "Anexos e prevenção de destinatário errado."]
+      },
+      {
+        n: 12, phase: "gestao", label: "Gestão", title: "Cobrança externa e retirada",
+        goal: "Cobrir o trabalho de campo.",
+        build: ["OS, agenda, rotas, check-in/out, GPS, fotos e assinatura.", "Retirada com equipamentos recolhidos.", "Experiência móvel e offline básico.", "Mapa e redistribuição de visitas."],
+        validate: ["Teste real em campo e condições de rede.", "Política de localização e retenção.", "Conferência de inventário com ERP."],
+        tests: ["Offline/online e conflitos.", "GPS adulterado, anexos e permissões.", "E2E visita → retirada → encerramento."]
+      },
+      {
+        n: 13, phase: "inteligencia", label: "Inteligência", title: "Analytics, relatórios e Índice de Saúde",
+        goal: "Consolidar indicadores confiáveis e acionáveis.",
+        build: ["Camada analítica e dicionário de métricas.", "Dashboards, metas, ranking e filtros.", "Relatórios e exportação BI.", "Índice de Saúde transparente."],
+        validate: ["Proprietário, fórmula, fonte e periodicidade de cada métrica.", "Reconciliação financeira e amostra manual.", "Revisão dos incentivos gerados pelo ranking."],
+        tests: ["Golden datasets de KPIs.", "Períodos, fuso, fechamento e grandes exportações.", "Acesso e mascaramento nas exportações."]
+      },
+      {
+        n: 14, phase: "inteligencia", label: "Inteligência", title: "IA assistiva: resumo, mensagens e conhecimento",
+        goal: "Reduzir esforço sem automatizar decisões críticas.",
+        build: ["Resumo com acesso ao histórico original.", "Mensagens editáveis e assistente com fontes.", "Registro de modelo, resposta, aceite e edição.", "Guardrails de privacidade e segurança."],
+        validate: ["Avaliação criada por especialistas.", "Aprovação humana antes da comunicação.", "Fidelidade, cobertura, erro grave e tempo economizado."],
+        tests: ["Avaliação offline, red team e dados sensíveis.", "Latência, indisponibilidade e fallback.", "Auditoria e retenção."]
+      },
+      {
+        n: 15, phase: "inteligencia", label: "Inteligência", title: "Score, priorização e recomendações",
+        goal: "Apoiar priorização e decisão de forma explicável.",
+        build: ["Baseline por regras antes do modelo estatístico.", "Score e fatores explicativos.", "Recomendações, risco operacional e previsão.", "Drift, shadow mode, feature flag e rollback."],
+        validate: ["Backtesting e comparação com baseline.", "Viés, estabilidade e custos de erro.", "Piloto em shadow mode."],
+        tests: ["Qualidade, leakage, reprodutibilidade e calibração.", "A/B após aprovação.", "Saída: ganho mensurável sem piorar compliance."]
+      },
+      {
+        n: 16, phase: "inteligencia", label: "SaaS", title: "Multiempresa e isolamento SaaS",
+        goal: "Preparar a plataforma para múltiplos clientes.",
+        build: ["Tenant, filial, branding, parâmetros e quotas.", "Provisionamento, suporte e auditoria.", "Assinatura e medição de uso."],
+        validate: ["Modelo operacional e comercial por tenant.", "Isolamento e responsabilidades de suporte."],
+        tests: ["Isolamento horizontal e cache.", "Backup por tenant, carga e noisy-neighbor.", "Pentest antes da produção comercial."]
+      },
+      {
+        n: 17, phase: "inteligencia", label: "SaaS", title: "Multi-ERP e API pública",
+        goal: "Desacoplar o produto do RBX.",
+        build: ["Modelo canônico e contrato de conectores.", "Segundo ERP como prova.", "API pública, chaves e quotas.", "Webhooks de saída e replay seguro."],
+        validate: ["Matriz de capacidades por ERP.", "Homologação com segundo ERP."],
+        tests: ["Certificação comum de conectores.", "Compatibilidade, rate limit e credenciais.", "Chaos tests e reconciliação."]
+      },
+      {
+        n: 18, phase: "inteligencia", label: "SaaS", title: "Hardening e lançamento",
+        goal: "Tornar a solução operacionalmente sustentável.",
+        build: ["Performance, acessibilidade e segurança.", "SLOs, alertas, incidentes e capacidade.", "Manuais, treinamento, implantação e suporte.", "Migração, rollback e continuidade."],
+        validate: ["Ensaio de go-live.", "Checklists jurídico, privacidade, segurança e suporte.", "Capacidade, custos e riscos residuais."],
+        tests: ["Regressão, pentest, carga, soak, failover e DR.", "Game day de falhas críticas.", "Saída: aceite executivo e operacional."]
+      }
+    ];
+
+    const list = document.getElementById("sprintList");
+    const search = document.getElementById("search");
+    const filters = [...document.querySelectorAll(".filter")];
+    const empty = document.getElementById("empty");
+    const expandButton = document.getElementById("expandAll");
+    let activeFilter = "all";
+    let expanded = false;
+
+    const escapeHtml = value => value.replace(/[&<>"']/g, char => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    })[char]);
+
+    function bullets(items) {
+      return `<ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+    }
+
+    function render() {
+      const term = search.value.trim().toLocaleLowerCase("pt-BR");
+      const visible = sprints.filter(sprint => {
+        const inPhase = activeFilter === "all" || sprint.phase === activeFilter;
+        const haystack = [sprint.title, sprint.goal, ...sprint.build, ...sprint.validate, ...sprint.tests]
+          .join(" ").toLocaleLowerCase("pt-BR");
+        return inPhase && (!term || haystack.includes(term));
+      });
+
+      list.innerHTML = visible.map(sprint => `
+        <details class="sprint" data-phase="${sprint.phase}" ${expanded ? "open" : ""}>
+          <summary>
+            <span class="sprint-no">${String(sprint.n).padStart(2, "0")}</span>
+            <span class="sprint-title"><strong>${escapeHtml(sprint.title)}</strong><span>${escapeHtml(sprint.goal)}</span></span>
+            <span class="sprint-phase">${escapeHtml(sprint.label)}</span>
+            <span class="chevron" aria-hidden="true">+</span>
+          </summary>
+          <div class="sprint-body">
+            <section class="workstream implementation"><h4><span class="dot"></span>Implementação</h4>${bullets(sprint.build)}</section>
+            <section class="workstream validation"><h4><span class="dot"></span>Validações</h4>${bullets(sprint.validate)}</section>
+            <section class="workstream tests"><h4><span class="dot"></span>Testes e evidências</h4>${bullets(sprint.tests)}</section>
+          </div>
+        </details>
+      `).join("");
+      empty.style.display = visible.length ? "none" : "block";
+    }
+
+    search.addEventListener("input", render);
+    filters.forEach(button => button.addEventListener("click", () => {
+      filters.forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+      activeFilter = button.dataset.filter;
+      render();
+    }));
+    expandButton.addEventListener("click", () => {
+      expanded = !expanded;
+      expandButton.textContent = expanded ? "Recolher" : "Expandir";
+      document.querySelectorAll("details.sprint").forEach(item => item.open = expanded);
+    });
+
+    render();
+  </script>
+</body>
+</html>

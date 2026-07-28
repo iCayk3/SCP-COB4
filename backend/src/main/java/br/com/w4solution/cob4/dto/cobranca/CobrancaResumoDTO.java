@@ -17,6 +17,10 @@ public record CobrancaResumoDTO(
 		String clienteRbxCodigo,
 		String prioridade,
 		int slaHoras,
-		String responsavelNome
+		String responsavelNome,
+		String estadoFluxo,
+		OffsetDateTime estadoFluxoDesde,
+		int diasAtraso,
+		String faixaAtraso
 ) {
 }

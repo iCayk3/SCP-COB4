@@ -90,7 +90,7 @@ export default function ChatPageView() {
           <Conversation processo={selecionado} handleOpen={() => setOpenLeftDrawer(true)} />
         </Grid>
         <Grid size={{ lg: 3, md: 12, xs: 12 }}>
-          <ClientInfoPanel processo={selecionado} />
+          <ClientInfoPanel processo={selecionado} onAtualizar={carregar} />
         </Grid>
       </Grid>
     </Box>;

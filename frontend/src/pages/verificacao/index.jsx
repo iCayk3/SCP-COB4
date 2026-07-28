@@ -10,8 +10,8 @@ const MODULOS = [
 export default function VerificacaoPage() {
   return <Stack spacing={3}>
       <div>
-        <Typography variant="h4" fontWeight={700}>Central de verificação do SGC</Typography>
-        <Typography color="text.secondary">Área temporária para visualizar e testar o que já está implementado.</Typography>
+        <Typography variant="h4" fontWeight={700}>Operação do SGC</Typography>
+        <Typography color="text.secondary">Acompanhe processos, regras vigentes e histórico operacional.</Typography>
       </div>
       <Grid container spacing={3}>
         {MODULOS.map(([titulo, descricao, caminho]) => <Grid key={titulo} size={{ xs: 12, md: 4 }}>

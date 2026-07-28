@@ -98,8 +98,10 @@ export default function Conversation({ handleOpen, processo }) {
       </Card>;
   }
 
-  return <Card className="h-full">
-      <FlexBetween padding={3}>
+  return <Card className="h-full" sx={{
+      height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden'
+    }}>
+      <FlexBetween padding={3} sx={{ flexShrink: 0 }}>
         <FlexBox alignItems="center" gap={1.5}>
           <Avatar>{processo.cliente?.charAt(0)}</Avatar>
           <Box>
@@ -113,10 +115,10 @@ export default function Conversation({ handleOpen, processo }) {
       </FlexBetween>
       <Divider />
 
-      <Box position="relative">
+      <Box position="relative" sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <ToggleBtn screen="md" onClick={handleOpen}><ChevronRight sx={{ fontSize: 16, color: 'white' }} /></ToggleBtn>
-        <Scrollbar style={{ maxHeight: 500 }}>
-          <Stack spacing={2} px={3} py={2} minHeight={500}>
+        <Scrollbar style={{ height: '100%' }}>
+          <Stack spacing={2} px={3} py={2} minHeight="100%">
             {timeline.map(item => <Box key={`timeline-${item.id}`} borderLeft={3}
               borderColor="primary.main" pl={2} py={0.5}>
                 <Typography variant="body2" fontWeight={600}>{item.evento.replaceAll('_', ' ')}</Typography>
@@ -158,7 +160,7 @@ export default function Conversation({ handleOpen, processo }) {
       <Divider />
 
       {erro && <Alert severity="error" onClose={() => setErro('')}>{erro}</Alert>}
-      <Box px={3} py={2}>
+      <Box px={3} py={2} sx={{ flexShrink: 0 }}>
         <FlexBetween gap={2}>
           <InputBase fullWidth value={texto} onChange={e => setTexto(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') enviar(); }}

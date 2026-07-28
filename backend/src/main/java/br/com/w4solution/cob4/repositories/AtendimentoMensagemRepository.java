@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface AtendimentoMensagemRepository extends JpaRepository<AtendimentoMensagem, Long> {
 	List<AtendimentoMensagem> findByAtendimentoIdOrderByEnviadaEmAscIdAsc(Long atendimentoId);
+	boolean existsByAtendimentoCobrancaIdAndAutor(Long cobrancaId, AtendimentoMensagem.Autor autor);
 }

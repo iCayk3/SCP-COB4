@@ -20,7 +20,7 @@ export default function AllMessages({ processos, selecionado, onSelecionar, pagi
             </ListItemAvatar>
             <ListItemText
               primary={processo.cliente}
-              secondary={`${processo.referencia} • ${processo.quantidadeBoletos} boleto(s)`}
+              secondary={`${processo.referencia} • ${processo.diasAtraso || 0} dias • ${processo.faixaAtraso?.replaceAll('_', ' ') || 'F1 RECENTE'}`}
               slotProps={{ primary: { fontSize: 14, fontWeight: 600 }, secondary: { fontSize: 11 } }}
             />
           </ListItemButton>)}

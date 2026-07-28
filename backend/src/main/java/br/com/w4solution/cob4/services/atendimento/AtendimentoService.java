@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import br.com.w4solution.cob4.services.fluxo.EstadoProcessoService;
+import br.com.w4solution.cob4.dto.fluxo.AlterarEstadoDTO;
 
 @Service
 public class AtendimentoService {
@@ -17,16 +19,19 @@ public class AtendimentoService {
 	private final AtendimentoMensagemRepository mensagemRepository;
 	private final ProcessoTimelineRepository timelineRepository;
 	private final TarefaCobrancaRepository tarefaRepository;
+	private final EstadoProcessoService estadoProcessoService;
 
 	public AtendimentoService(CobrancaRepository cobrancaRepository, AtendimentoRepository atendimentoRepository,
 							  AtendimentoMensagemRepository mensagemRepository,
 							  ProcessoTimelineRepository timelineRepository,
-							  TarefaCobrancaRepository tarefaRepository) {
+							  TarefaCobrancaRepository tarefaRepository,
+							  EstadoProcessoService estadoProcessoService) {
 		this.cobrancaRepository = cobrancaRepository;
 		this.atendimentoRepository = atendimentoRepository;
 		this.mensagemRepository = mensagemRepository;
 		this.timelineRepository = timelineRepository;
 		this.tarefaRepository = tarefaRepository;
+		this.estadoProcessoService = estadoProcessoService;
 	}
 
 	@Transactional
@@ -57,6 +62,19 @@ public class AtendimentoService {
 			return mensagem;
 		}).toList();
 		mensagemRepository.saveAll(mensagens);
+		if ("NOVO".equals(processo.getEstadoFluxo())
+				&& mensagens.stream().anyMatch(m -> m.getAutor() == AtendimentoMensagem.Autor.CLIENTE)) {
+			estadoProcessoService.alterar(referencia, new AlterarEstadoDTO(
+					"EM_ATENDIMENTO", dados.operadorNome(), dados.operadorIdentificador(),
+					"CONTATO_REALIZADO",
+					"Cliente respondeu pelo chat."));
+		}
+		if ("NOVO".equals(processo.getEstadoFluxo()) && dados.resultado() == Atendimento.Resultado.SEM_CONTATO) {
+			estadoProcessoService.alterar(referencia, new AlterarEstadoDTO(
+					"SEM_CONTATO", dados.operadorNome(), dados.operadorIdentificador(),
+					"SEM_RETORNO_DO_CLIENTE",
+					"Tentativa por ligação concluída sem contato."));
+		}
 
 		processo.setStatus(Cobranca.Status.EM_ANDAMENTO);
 		processo.setOperadorNome(dados.operadorNome().trim());

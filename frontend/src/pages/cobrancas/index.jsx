@@ -2,15 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
   Grid,
   IconButton,
   InputAdornment,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -25,11 +27,14 @@ import {
 } from '@mui/material';
 import RefreshRounded from '@mui/icons-material/RefreshRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import SyncRounded from '@mui/icons-material/SyncRounded';
+import CloseRounded from '@mui/icons-material/CloseRounded';
+import ChatBubbleOutlineRounded from '@mui/icons-material/ChatBubbleOutlineRounded';
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import AccountBalanceWalletRounded from '@mui/icons-material/AccountBalanceWalletRounded';
-import { listarCobrancasAbertas, sincronizarCobrancasRbx } from '@/services/cobrancas';
+import { listarCobrancasAbertas } from '@/services/cobrancas';
+import Conversation from '@/page-sections/chat/conversation';
+import ClientInfoPanel from '@/page-sections/chat/ClientInfoPanel';
 
 const moeda = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -41,17 +46,11 @@ const dataHora = new Intl.DateTimeFormat('pt-BR', {
   timeStyle: 'short'
 });
 
-function formatarCpf(cpf = '') {
-  const numeros = cpf.replace(/\D/g, '');
-  if (numeros.length !== 11) return cpf || '—';
-  return numeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
-
 function contato(telefone, email) {
   if (!telefone && !email) return <Typography color="text.secondary">Não informado</Typography>;
-  return <Stack spacing={0.25}>
-      {telefone && <Typography variant="body2">{telefone}</Typography>}
-      {email && <Typography variant="caption" color="text.secondary">{email}</Typography>}
+  return <Stack spacing={0.25} minWidth={0}>
+      {telefone && <Typography variant="body2" noWrap>{telefone}</Typography>}
+      {email && <Typography variant="caption" color="text.secondary" noWrap title={email}>{email}</Typography>}
     </Stack>;
 }
 
@@ -83,10 +82,9 @@ function Indicador({ titulo, valor, legenda, icone, cor = 'primary.main' }) {
 export default function CobrancasPage() {
   const [cobrancas, setCobrancas] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [sincronizando, setSincronizando] = useState(false);
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
-  const [resultado, setResultado] = useState(null);
+  const [atendimento, setAtendimento] = useState(null);
   const [pagina, setPagina] = useState(0);
   const [linhasPorPagina, setLinhasPorPagina] = useState(25);
 
@@ -105,20 +103,6 @@ export default function CobrancasPage() {
   useEffect(() => {
     carregar();
   }, [carregar]);
-
-  const sincronizar = async () => {
-    setSincronizando(true);
-    setErro('');
-    try {
-      const resumo = await sincronizarCobrancasRbx();
-      setResultado(resumo);
-      await carregar();
-    } catch (error) {
-      setErro(error.response?.data?.erro || 'A sincronização com o RBX não pôde ser concluída.');
-    } finally {
-      setSincronizando(false);
-    }
-  };
 
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase().replace(/\D/g, '');
@@ -149,19 +133,11 @@ export default function CobrancasPage() {
         <Stack direction="row" spacing={1} alignItems="center">
           <Tooltip title="Atualizar dados da tela">
             <span>
-              <IconButton onClick={carregar} disabled={carregando || sincronizando}>
+              <IconButton onClick={carregar} disabled={carregando}>
                 <RefreshRounded />
               </IconButton>
             </span>
           </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={sincronizando ? <CircularProgress size={18} color="inherit" /> : <SyncRounded />}
-            onClick={sincronizar}
-            disabled={sincronizando}
-          >
-            {sincronizando ? 'Sincronizando...' : 'Sincronizar RBX'}
-          </Button>
         </Stack>
       </Stack>
 
@@ -169,7 +145,7 @@ export default function CobrancasPage() {
 
       <Grid container spacing={3} mb={3}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <Indicador titulo="Cobranças abertas" valor={cobrancas.length} legenda="Agrupadas por CPF"
+          <Indicador titulo="Protocolos ativos" valor={cobrancas.length} legenda="Um protocolo por contrato"
             icone={<PeopleAltRounded />} />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
@@ -186,7 +162,7 @@ export default function CobrancasPage() {
         <CardContent>
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} mb={2}>
             <Box>
-              <Typography variant="h6">Clientes em cobrança</Typography>
+              <Typography variant="h6">Protocolos de cobrança</Typography>
               <Typography variant="body2" color="text.secondary">
                 {filtradas.length} registro(s) exibido(s)
               </Typography>
@@ -209,40 +185,58 @@ export default function CobrancasPage() {
           </Stack>
 
           <TableContainer>
-            <Table>
+            <Table size="small" sx={{
+              minWidth: 820,
+              tableLayout: 'fixed',
+              '& .MuiTableCell-root': { px: 1.25, verticalAlign: 'middle' }
+            }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Cliente</TableCell>
-                  <TableCell>CPF</TableCell>
-                  <TableCell>Contato</TableCell>
-                  <TableCell>Referência</TableCell>
-                  <TableCell align="center">Boletos</TableCell>
-                  <TableCell align="right">Valor em aberto</TableCell>
-                  <TableCell>Atualização</TableCell>
-                  <TableCell>Status</TableCell>
+                  <TableCell sx={{ width: 230 }}>Cliente</TableCell>
+                  <TableCell sx={{ width: 180 }}>Contato</TableCell>
+                  <TableCell sx={{ width: 155 }}>Faixa</TableCell>
+                  <TableCell sx={{ width: 125 }} align="right">Em aberto</TableCell>
+                  <TableCell sx={{ width: 120 }}>Atualização</TableCell>
+                  <TableCell sx={{ width: 105 }}>Status</TableCell>
+                  <TableCell sx={{ width: 48 }} align="center" />
                 </TableRow>
               </TableHead>
               <TableBody>
                 {carregando ? <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                       <CircularProgress size={30} />
                       <Typography variant="body2" color="text.secondary" mt={1}>Consultando o banco...</Typography>
                     </TableCell>
                   </TableRow> : filtradas.length === 0 ? <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                       <Typography fontWeight={600}>Nenhuma cobrança encontrada</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Sincronize o RBX ou ajuste o termo pesquisado.
                       </Typography>
                     </TableCell>
-                  </TableRow> : paginaAtual.map(item => <TableRow hover key={item.referencia}>
+                  </TableRow> : paginaAtual.map(item => <TableRow hover key={item.referencia}
+                    onClick={() => setAtendimento(item)}
+                    sx={{ cursor: 'pointer', '&:hover .abrir-chat': { opacity: 1 } }}>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={600}>{item.cliente}</Typography>
+                      <Box minWidth={0}>
+                        <Typography variant="body2" fontWeight={700} noWrap title={item.cliente}>
+                          {item.clienteRbxCodigo && <Box component="span" color="primary.main">
+                            [{item.clienteRbxCodigo}]&nbsp;
+                          </Box>}
+                          {item.cliente}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap display="block"
+                          title={`Contrato ${item.contratoReferencia}`}>
+                          Contrato {item.contratoReferencia}
+                        </Typography>
+                      </Box>
                     </TableCell>
-                    <TableCell>{formatarCpf(item.cpf)}</TableCell>
                     <TableCell>{contato(item.telefone, item.email)}</TableCell>
-                    <TableCell><Typography variant="caption">{item.referencia}</Typography></TableCell>
-                    <TableCell align="center">{item.quantidadeBoletos}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      <Chip size="small" label={`${item.diasAtraso || 0} dias • ${
+                        item.faixaAtraso?.replaceAll('_', ' ') || 'F1 RECENTE'
+                      }`} />
+                    </TableCell>
                     <TableCell align="right">
                       <Typography variant="body2" fontWeight={700}>{moeda.format(item.valorTotal)}</Typography>
                     </TableCell>
@@ -250,6 +244,14 @@ export default function CobrancasPage() {
                       {item.atualizadaEm ? dataHora.format(new Date(item.atualizadaEm)) : '—'}
                     </TableCell>
                     <TableCell><Chip size="small" color="warning" label="Em aberto" /></TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Abrir atendimento">
+                        <IconButton size="small" color="primary" aria-label="Abrir atendimento"
+                          onClick={event => { event.stopPropagation(); setAtendimento(item); }}>
+                          <ChatBubbleOutlineRounded sx={{ fontSize: 19 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                   </TableRow>)}
               </TableBody>
             </Table>
@@ -271,17 +273,40 @@ export default function CobrancasPage() {
         </CardContent>
       </Card>
 
-      <Snackbar
-        open={Boolean(resultado)}
-        autoHideDuration={8000}
-        onClose={() => setResultado(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity="success" variant="filled" onClose={() => setResultado(null)}>
-          Sincronização concluída: {resultado?.boletosCriados || 0} novo(s),{' '}
-          {resultado?.boletosAtualizados || 0} atualizado(s) e{' '}
-          {resultado?.documentosIgnorados || 0} ignorado(s).
-        </Alert>
-      </Snackbar>
+      <Dialog open={Boolean(atendimento)} onClose={() => setAtendimento(null)}
+        fullWidth maxWidth="xl"
+        PaperProps={{
+          sx: {
+            height: { xs: '96dvh', md: '92dvh' },
+            maxHeight: { xs: '96dvh', md: '92dvh' },
+            m: { xs: 1, md: 2 }
+          }
+        }}>
+        <DialogTitle sx={{ py: 1.5 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography variant="h6">Atendimento</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {atendimento?.clienteRbxCodigo && `[${atendimento.clienteRbxCodigo}] `}
+                {atendimento?.cliente} • {atendimento?.referencia}
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setAtendimento(null)}><CloseRounded /></IconButton>
+          </Stack>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 2, overflow: 'hidden', minHeight: 0 }}>
+          <Grid container spacing={2} sx={{ height: '100%', minHeight: 0 }}>
+            <Grid size={{ xs: 12, md: 8 }}
+              sx={{ height: { xs: 'auto', md: '100%' }, minHeight: 0 }}>
+              <Conversation processo={atendimento} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}
+              sx={{ height: { xs: 'auto', md: '100%' }, minHeight: 0, overflowY: 'auto' }}>
+              <ClientInfoPanel processo={atendimento} onAtualizar={carregar} />
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </Box>;
 }

@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TarefaCobrancaRepository extends JpaRepository<TarefaCobranca, Long> {
 	boolean existsByCobrancaAndTipoAndStatus(Cobranca cobranca, String tipo, TarefaCobranca.Status status);
+	boolean existsByCobrancaAndTipo(Cobranca cobranca, String tipo);
 }

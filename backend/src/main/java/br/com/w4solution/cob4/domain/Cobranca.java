@@ -29,6 +29,9 @@ import org.springframework.util.StringUtils;
 public class Cobranca {
 	public enum Status { ABERTA, EM_ANDAMENTO, ENCERRADA, PAGA, CANCELADA }
 	public enum Prioridade { BAIXA, MEDIA, ALTA, CRITICA }
+	public enum FaixaAtraso {
+		F1_RECENTE, F2_INICIAL, F3_INTERMEDIARIO, F4_AVANCADO, F5_CRITICO, F6_JURIDICO
+	}
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,8 +51,28 @@ public class Cobranca {
 	@Column(nullable = false, length = 20)
 	private Status status = Status.ABERTA;
 
+	@Column(name = "fluxo_codigo", nullable = false, length = 60,
+			columnDefinition = "varchar(60) default 'COBRANCA_PADRAO'")
+	private String fluxoCodigo = "COBRANCA_PADRAO";
+
+	@Column(name = "estado_fluxo", nullable = false, length = 60,
+			columnDefinition = "varchar(60) default 'NOVO'")
+	private String estadoFluxo = "NOVO";
+
+	@Column(name = "estado_fluxo_desde", nullable = false,
+			columnDefinition = "timestamp with time zone default current_timestamp")
+	private OffsetDateTime estadoFluxoDesde;
+
 	@Column(name = "valor_total", nullable = false, precision = 19, scale = 2)
 	private BigDecimal valorTotal = BigDecimal.ZERO;
+
+	@Column(name = "dias_atraso", nullable = false, columnDefinition = "integer default 0")
+	private int diasAtraso;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "faixa_atraso", nullable = false, length = 30,
+			columnDefinition = "varchar(30) default 'F1_RECENTE'")
+	private FaixaAtraso faixaAtraso = FaixaAtraso.F1_RECENTE;
 
 	@Column(name = "contrato_referencia", nullable = false, length = 500,
 			columnDefinition = "varchar(500) default 'NAO_INFORMADO'")
@@ -91,6 +114,24 @@ public class Cobranca {
 	@Column(name = "motivo_encerramento", length = 500)
 	private String motivoEncerramento;
 
+	@Column(name = "motivo_encerramento_codigo", length = 60)
+	private String motivoEncerramentoCodigo;
+
+	@Column(name = "motivo_encerramento_nome", length = 120)
+	private String motivoEncerramentoNome;
+
+	@Column(name = "observacao_encerramento", length = 1000)
+	private String observacaoEncerramento;
+
+	@Column(name = "motivo_reabertura_codigo", length = 60)
+	private String motivoReaberturaCodigo;
+
+	@Column(name = "motivo_reabertura_nome", length = 120)
+	private String motivoReaberturaNome;
+
+	@Column(name = "observacao_reabertura", length = 1000)
+	private String observacaoReabertura;
+
 	@Column(name = "criada_em", nullable = false)
 	private OffsetDateTime criadaEm;
 
@@ -99,6 +140,11 @@ public class Cobranca {
 
 	@Transient
 	private Status statusCarregado;
+
+	@Transient
+	private boolean reaberturaAutorizada;
+
+	public void autorizarReabertura() { this.reaberturaAutorizada = true; }
 
 	public boolean encerrada() {
 		return status == Status.ENCERRADA || status == Status.PAGA || status == Status.CANCELADA;
@@ -113,10 +159,16 @@ public class Cobranca {
 	@PrePersist
 	@PreUpdate
 	void validarRegras() {
+		if (estadoFluxoDesde == null) {
+			estadoFluxoDesde = criadaEm != null ? criadaEm : OffsetDateTime.now();
+		}
 		if (!StringUtils.hasText(responsavelNome) || !StringUtils.hasText(responsavelIdentificador)) {
 			throw new IllegalStateException("RN-004: o processo não pode ficar sem responsável");
 		}
-		if (statusCarregado != null && (statusCarregado == Status.ENCERRADA
+		if (!StringUtils.hasText(fluxoCodigo) || !StringUtils.hasText(estadoFluxo)) {
+			throw new IllegalStateException("O cliente nunca poderá ficar sem fluxo e estado definidos");
+		}
+		if (!reaberturaAutorizada && statusCarregado != null && (statusCarregado == Status.ENCERRADA
 				|| statusCarregado == Status.PAGA || statusCarregado == Status.CANCELADA)) {
 			throw new IllegalStateException("RN-006: processos encerrados não podem ser editados");
 		}

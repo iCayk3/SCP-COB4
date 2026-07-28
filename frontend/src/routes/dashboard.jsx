@@ -23,6 +23,14 @@ const Cobrancas = lazy(() => import('@/pages/cobrancas'));
 const Verificacao = lazy(() => import('@/pages/verificacao'));
 const Regras = lazy(() => import('@/pages/verificacao/regras'));
 const Timeline = lazy(() => import('@/pages/verificacao/timeline'));
+const Fluxos = lazy(() => import('@/pages/fluxos'));
+const FaixasAtraso = lazy(() => import('@/pages/faixas-atraso'));
+const CatalogosMotivos = lazy(() => import('@/pages/catalogos-motivos'));
+const Configuracoes = lazy(() => import('@/pages/configuracoes'));
+const Metricas = lazy(() => import('@/pages/metricas'));
+const Backlog = lazy(() => import('@/pages/backlog'));
+const Lgpd = lazy(() => import('@/pages/lgpd'));
+const ConfiguracaoSincronizacao = lazy(() => import('@/pages/configuracao-sincronizacao'));
 
 // USER LIST PAGES
 const AddNewUser = lazy(() => import('@/pages/users/add-new-user'));
@@ -115,6 +123,45 @@ export const DashboardRoutes = [{
     }, {
       path: 'timeline',
       element: <Timeline />
+    }, {
+      path: 'fluxos',
+      element: <Fluxos />
+    }, {
+      path: 'faixas-atraso',
+      element: <FaixasAtraso />
+    }, {
+      path: 'catalogos-motivos',
+      element: <CatalogosMotivos />
+    }, {
+      path: 'lgpd',
+      element: <Lgpd />
+    }, {
+      path: 'sincronizacao-rbx',
+      element: <ConfiguracaoSincronizacao />
+    }]
+  }, {
+    path: 'configuracoes',
+    children: [{
+      index: true,
+      element: <Configuracoes />
+    }, {
+      path: 'fluxos',
+      element: <Fluxos />
+    }, {
+      path: 'faixas-atraso',
+      element: <FaixasAtraso />
+    }, {
+      path: 'catalogos-motivos',
+      element: <CatalogosMotivos />
+    }]
+  }, {
+    path: 'planejamento',
+    children: [{
+      path: 'metricas',
+      element: <Metricas />
+    }, {
+      path: 'backlog',
+      element: <Backlog />
     }]
   }, {
     path: 'crm',
