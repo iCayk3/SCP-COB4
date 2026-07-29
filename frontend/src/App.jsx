@@ -6,7 +6,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 // AUTH CONTEXT FILE
-import { AuthProvider } from '@/contexts/firebaseContext';
+import { AuthProvider } from '@/contexts/jwtContext';
 // RIGHT-TO-LEFT SUPPORT COMPONENT
 import { RTL } from '@/components/rtl';
 // ROUTES METHOD
@@ -30,16 +30,16 @@ export default function App() {
   const router = createBrowserRouter(routes());
   return <LocalizationProvider dateAdapter={AdapterDateFns}>
       <ThemeProvider theme={theme}>
-        <AuthProvider>
-          <RTL>
-            <ProgressProvider options={{
+        <ProgressProvider options={{
             showSpinner: false
           }}>
+          <AuthProvider>
+            <RTL>
               <CssBaseline />
               <RouterProvider router={router} />
-            </ProgressProvider>
-          </RTL>
-        </AuthProvider>
+            </RTL>
+          </AuthProvider>
+        </ProgressProvider>
       </ThemeProvider>
     </LocalizationProvider>;
 }

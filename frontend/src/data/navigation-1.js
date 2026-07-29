@@ -29,6 +29,10 @@ export const navigations = [{
     name: 'Visao geral',
     path: '/dashboard/configuracoes'
   }, {
+    name: 'Gestao de usuarios',
+    path: '/dashboard/configuracoes/usuarios',
+    access: 'administrator'
+  }, {
     name: 'Sincronizacao automatica RBX',
     path: '/dashboard/configuracoes/sincronizacao-rbx'
   }, {

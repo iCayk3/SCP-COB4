@@ -5,6 +5,7 @@ import br.com.w4solution.cob4.dto.catalogo.MotivoCatalogoDTO;
 import br.com.w4solution.cob4.services.catalogo.MotivoCatalogoService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class MotivoCatalogoController {
 	}
 
 	@PutMapping
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
 	public List<MotivoCatalogoDTO> salvar(@Valid @RequestBody List<@Valid MotivoCatalogoDTO> motivos) {
 		return service.salvar(motivos);
 	}

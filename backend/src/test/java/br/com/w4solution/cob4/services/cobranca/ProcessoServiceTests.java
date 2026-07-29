@@ -6,9 +6,11 @@ import br.com.w4solution.cob4.repositories.*;
 import br.com.w4solution.cob4.security.*;
 import br.com.w4solution.cob4.services.catalogo.MotivoCatalogoService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
@@ -19,34 +21,42 @@ class ProcessoServiceTests {
 	@Mock CobrancaRepository cobrancaRepository;
 	@Mock ProcessoTimelineRepository timelineRepository;
 	@Mock MotivoCatalogoService motivoService;
-	private final AutorizacaoService autorizacao = new AutorizacaoService();
+	@Mock UsuarioAtualService usuarioAtual;
+	private AutorizacaoService autorizacao;
+
+	@BeforeEach void configurar() {
+		autorizacao = new AutorizacaoService(usuarioAtual);
+	}
 
 	@Test void encerramentoExigePerfilAutorizado() {
+		when(usuarioAtual.atual()).thenReturn(new UsuarioAutenticado(1L, "Op", "op", PerfilUsuario.OPERADOR));
 		var service = new ProcessoService(cobrancaRepository, timelineRepository, motivoService, autorizacao);
-		var dto = new EncerrarProcessoDTO("PAGAMENTO", null, "Op", "op", PerfilUsuario.OPERADOR);
-		assertThatThrownBy(() -> service.encerrar("P1", dto)).isInstanceOf(SecurityException.class);
+		var dto = new EncerrarProcessoDTO("PAGAMENTO", null);
+		assertThatThrownBy(() -> service.encerrar("P1", dto)).isInstanceOf(AccessDeniedException.class);
 		verifyNoInteractions(cobrancaRepository);
 	}
 	@Test void encerramentoPreservaCodigoENomeDoMotivo() {
+		when(usuarioAtual.atual()).thenReturn(new UsuarioAutenticado(2L, "Sup", "sup", PerfilUsuario.SUPERVISOR));
 		var c = processoAberto();
 		var motivo = motivo(MotivoCatalogo.Tipo.ENCERRAMENTO, "PAGAMENTO", "Pagamento confirmado");
 		when(cobrancaRepository.findByReferencia("P1")).thenReturn(Optional.of(c));
 		when(motivoService.validarAtivo(MotivoCatalogo.Tipo.ENCERRAMENTO, "PAGAMENTO", "Baixa RBX"))
 				.thenReturn(motivo);
 		new ProcessoService(cobrancaRepository, timelineRepository, motivoService, autorizacao).encerrar("P1",
-				new EncerrarProcessoDTO("PAGAMENTO", "Baixa RBX", "Sup", "sup", PerfilUsuario.SUPERVISOR));
+				new EncerrarProcessoDTO("PAGAMENTO", "Baixa RBX"));
 		assertThat(c.getMotivoEncerramentoCodigo()).isEqualTo("PAGAMENTO");
 		assertThat(c.getMotivoEncerramentoNome()).isEqualTo("Pagamento confirmado");
 		verify(timelineRepository).save(argThat(t -> t.getDescricao().contains("[PAGAMENTO]")));
 	}
 	@Test void supervisorReabreComMotivoControlado() {
+		when(usuarioAtual.atual()).thenReturn(new UsuarioAutenticado(2L, "Sup", "sup", PerfilUsuario.SUPERVISOR));
 		var c = processoAberto(); c.setStatus(Cobranca.Status.ENCERRADA); c.setEncerradaEm(OffsetDateTime.now());
 		var motivo = motivo(MotivoCatalogo.Tipo.REABERTURA, "ESTORNO", "Baixa estornada");
 		when(cobrancaRepository.findByReferencia("P1")).thenReturn(Optional.of(c));
 		when(motivoService.validarAtivo(MotivoCatalogo.Tipo.REABERTURA, "ESTORNO", "Estorno RBX"))
 				.thenReturn(motivo);
 		new ProcessoService(cobrancaRepository, timelineRepository, motivoService, autorizacao).reabrir("P1",
-				new ReabrirProcessoDTO("ESTORNO", "Estorno RBX", "Sup", "sup", PerfilUsuario.SUPERVISOR));
+				new ReabrirProcessoDTO("ESTORNO", "Estorno RBX"));
 		assertThat(c.getStatus()).isEqualTo(Cobranca.Status.EM_ANDAMENTO);
 		assertThat(c.getEncerradaEm()).isNull();
 		assertThat(c.getMotivoReaberturaCodigo()).isEqualTo("ESTORNO");

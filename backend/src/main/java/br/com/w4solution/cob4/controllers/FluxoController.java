@@ -4,6 +4,7 @@ import br.com.w4solution.cob4.dto.fluxo.*;
 import br.com.w4solution.cob4.services.fluxo.*;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -21,27 +22,33 @@ public class FluxoController {
 	public List<FluxoDTO> listar() { return fluxoService.listar(); }
 
 	@PostMapping
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
 	public FluxoDTO criar(@Valid @RequestBody FluxoDTO dados) { return fluxoService.salvar(null, dados); }
 
 	@PutMapping("/{id}")
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
 	public FluxoDTO editar(@PathVariable Long id, @Valid @RequestBody FluxoDTO dados) {
 		return fluxoService.salvar(id, dados);
 	}
 
 	@GetMapping("/processos/{referencia}")
+	@PreAuthorize("@carteiraAccess.podeAcessar(#referencia)")
 	public EstadoProcessoDTO estado(@PathVariable String referencia) { return estadoService.consultar(referencia); }
 
 	@PostMapping("/processos/{referencia}/transicoes")
+	@PreAuthorize("@carteiraAccess.podeAcessar(#referencia)")
 	public EstadoProcessoDTO alterar(@PathVariable String referencia, @Valid @RequestBody AlterarEstadoDTO dados) {
 		return estadoService.alterar(referencia, dados);
 	}
 
 	@PostMapping("/processos/transicoes-lote")
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE','SCOPE_SUPERVISOR')")
 	public ResultadoAlteracaoLoteDTO alterarEmLote(@Valid @RequestBody AlterarEstadoLoteDTO dados) {
 		return estadoService.alterarEmLote(dados);
 	}
 
 	@PutMapping("/processos/{referencia}")
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
 	public EstadoProcessoDTO atribuir(@PathVariable String referencia, @Valid @RequestBody AtribuirFluxoDTO dados) {
 		return estadoService.atribuirFluxo(referencia, dados);
 	}

@@ -21,6 +21,10 @@ public record CobrancaResumoDTO(
 		String estadoFluxo,
 		OffsetDateTime estadoFluxoDesde,
 		int diasAtraso,
-		String faixaAtraso
+		String faixaAtraso,
+		OffsetDateTime slaPausadoEm,
+		int slaEscalonamentoNivel,
+		OffsetDateTime slaAlertadoEm,
+		OffsetDateTime slaUltimaNotificacaoEm
 ) {
 }

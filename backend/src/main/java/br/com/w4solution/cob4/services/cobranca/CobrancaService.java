@@ -258,7 +258,9 @@ public class CobrancaService {
 						cobranca.getCliente().getRbxCodigo(), cobranca.getPrioridade().name(),
 						cobranca.getSlaHoras(), cobranca.getResponsavelNome(),
 						cobranca.getEstadoFluxo(), cobranca.getEstadoFluxoDesde(),
-						cobranca.getDiasAtraso(), cobranca.getFaixaAtraso().name()))
+						cobranca.getDiasAtraso(), cobranca.getFaixaAtraso().name(),
+						cobranca.getSlaPausadoEm(), cobranca.getSlaEscalonamentoNivel(),
+						cobranca.getSlaAlertadoEm(), cobranca.getSlaUltimaNotificacaoEm()))
 				.toList();
 	}
 
@@ -282,7 +284,9 @@ public class CobrancaService {
 						cobranca.getCliente().getRbxCodigo(), cobranca.getPrioridade().name(),
 						cobranca.getSlaHoras(), cobranca.getResponsavelNome(),
 						cobranca.getEstadoFluxo(), cobranca.getEstadoFluxoDesde(),
-						cobranca.getDiasAtraso(), cobranca.getFaixaAtraso().name())).toList();
+						cobranca.getDiasAtraso(), cobranca.getFaixaAtraso().name(),
+						cobranca.getSlaPausadoEm(), cobranca.getSlaEscalonamentoNivel(),
+						cobranca.getSlaAlertadoEm(), cobranca.getSlaUltimaNotificacaoEm())).toList();
 		return new PaginaCobrancaDTO(itens, resultado.getNumber(), resultado.getSize(),
 				resultado.getTotalElements(), resultado.getTotalPages(), resultado.isFirst(), resultado.isLast());
 	}
@@ -360,7 +364,9 @@ public class CobrancaService {
 				cobranca.getCliente().getRbxCodigo(), cobranca.getPrioridade().name(),
 				cobranca.getSlaHoras(), cobranca.getResponsavelNome(),
 				cobranca.getEstadoFluxo(), cobranca.getEstadoFluxoDesde(),
-				cobranca.getDiasAtraso(), cobranca.getFaixaAtraso().name());
+				cobranca.getDiasAtraso(), cobranca.getFaixaAtraso().name(),
+				cobranca.getSlaPausadoEm(), cobranca.getSlaEscalonamentoNivel(),
+				cobranca.getSlaAlertadoEm(), cobranca.getSlaUltimaNotificacaoEm());
 	}
 
 	void aplicarPoliticaAtraso(Cobranca cobranca) {

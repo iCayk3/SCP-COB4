@@ -34,7 +34,7 @@ public class PagamentoService {
 
 	@Transactional
 	public void registrarPagamento(String referencia, RegistrarPagamentoDTO dados) {
-		autorizacaoService.exigir(dados.perfil(), AcaoSistema.CONFIRMAR_PAGAMENTO);
+		var usuario = autorizacaoService.exigir(AcaoSistema.CONFIRMAR_PAGAMENTO);
 		Cobranca cobranca = cobranca(referencia);
 		OffsetDateTime agora = OffsetDateTime.now();
 		BigDecimal pago = dados.valor();
@@ -78,12 +78,12 @@ public class PagamentoService {
 				"Pagamento confirmado no valor de " + pago + ". Saldo atual: " + saldo
 						+ (dados.comprovanteReferencia() == null || dados.comprovanteReferencia().isBlank()
 						? "" : ". Comprovante: " + dados.comprovanteReferencia().trim()),
-				dados.usuarioNome(), dados.usuarioIdentificador(), agora);
+				usuario.nome(), usuario.identificador(), agora);
 	}
 
 	@Transactional
 	public void registrarEstorno(String referencia, RegistrarPagamentoDTO dados) {
-		autorizacaoService.exigir(dados.perfil(), AcaoSistema.CONFIRMAR_PAGAMENTO);
+		var usuario = autorizacaoService.exigir(AcaoSistema.CONFIRMAR_PAGAMENTO);
 		Cobranca cobranca = cobranca(referencia);
 		OffsetDateTime agora = OffsetDateTime.now();
 		cobranca.autorizarReabertura();
@@ -111,7 +111,7 @@ public class PagamentoService {
 		tarefaRepository.save(tarefa);
 		timeline(cobranca, "PAGAMENTO_ESTORNADO",
 				"Estorno registrado no valor de " + dados.valor() + ". Protocolo reaberto.",
-				dados.usuarioNome(), dados.usuarioIdentificador(), agora);
+				usuario.nome(), usuario.identificador(), agora);
 	}
 
 	private Cobranca cobranca(String referencia) {

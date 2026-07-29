@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
   CircularProgress,
   Dialog,
   DialogContent,
+  DialogActions,
   DialogTitle,
   Divider,
   Grid,
@@ -32,7 +34,10 @@ import ChatBubbleOutlineRounded from '@mui/icons-material/ChatBubbleOutlineRound
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import AccountBalanceWalletRounded from '@mui/icons-material/AccountBalanceWalletRounded';
-import { listarCobrancasAbertas } from '@/services/cobrancas';
+import PauseCircleOutlineRounded from '@mui/icons-material/PauseCircleOutlineRounded';
+import PlayCircleOutlineRounded from '@mui/icons-material/PlayCircleOutlineRounded';
+import AccessTimeRounded from '@mui/icons-material/AccessTimeRounded';
+import { listarCobrancasAbertas, pausarSla, retomarSla } from '@/services/cobrancas';
 import Conversation from '@/page-sections/chat/conversation';
 import ClientInfoPanel from '@/page-sections/chat/ClientInfoPanel';
 
@@ -100,6 +105,9 @@ export default function CobrancasPage() {
   const [atendimento, setAtendimento] = useState(null);
   const [pagina, setPagina] = useState(0);
   const [linhasPorPagina, setLinhasPorPagina] = useState(25);
+  const [acaoSla, setAcaoSla] = useState(null);
+  const [motivoSla, setMotivoSla] = useState('');
+  const [salvandoSla, setSalvandoSla] = useState(false);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -134,6 +142,25 @@ export default function CobrancasPage() {
 
   const total = cobrancas.reduce((soma, item) => soma + Number(item.valorTotal || 0), 0);
   const boletos = cobrancas.reduce((soma, item) => soma + Number(item.quantidadeBoletos || 0), 0);
+  const slasCriticos = cobrancas.filter(item => Number(item.slaEscalonamentoNivel || 0) > 0).length;
+
+  const confirmarAcaoSla = async () => {
+    if (!acaoSla || !motivoSla.trim()) return;
+    setSalvandoSla(true);
+    setErro('');
+    try {
+      if (acaoSla.tipo === 'pausar') await pausarSla(acaoSla.item.referencia, motivoSla.trim());
+      else await retomarSla(acaoSla.item.referencia, motivoSla.trim());
+      setAcaoSla(null);
+      setMotivoSla('');
+      await carregar();
+    } catch (error) {
+      setErro(error.response?.data?.message || error.response?.data?.erro
+        || `Não foi possível ${acaoSla.tipo} o SLA.`);
+    } finally {
+      setSalvandoSla(false);
+    }
+  };
 
   return <Box className="pt-2 pb-4">
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} mb={3}>
@@ -157,17 +184,21 @@ export default function CobrancasPage() {
       {erro && <Alert severity="error" sx={{ mb: 3 }}>{erro}</Alert>}
 
       <Grid container spacing={3} mb={3}>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Indicador titulo="Protocolos ativos" valor={cobrancas.length} legenda="Um protocolo por contrato"
             icone={<PeopleAltRounded />} />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Indicador titulo="Boletos vinculados" valor={boletos} legenda="Sem duplicar documentos"
             icone={<ReceiptLongRounded />} cor="warning.main" />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Indicador titulo="Valor total em aberto" valor={moeda.format(total)} legenda="Soma das cobranças atuais"
             icone={<AccountBalanceWalletRounded />} cor="success.main" />
+        </Grid>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Indicador titulo="SLAs em alerta" valor={slasCriticos} legenda="Protocolos vencidos ou escalonados"
+            icone={<AccessTimeRounded />} cor="error.main" />
         </Grid>
       </Grid>
 
@@ -199,7 +230,7 @@ export default function CobrancasPage() {
 
           <TableContainer>
             <Table size="small" sx={{
-              minWidth: 820,
+              minWidth: 980,
               tableLayout: 'fixed',
               '& .MuiTableCell-root': { px: 1.25, verticalAlign: 'middle' }
             }}>
@@ -211,17 +242,18 @@ export default function CobrancasPage() {
                   <TableCell sx={{ width: 125 }} align="right">Em aberto</TableCell>
                   <TableCell sx={{ width: 120 }}>Atualização</TableCell>
                   <TableCell sx={{ width: 105 }}>Status</TableCell>
+                  <TableCell sx={{ width: 150 }}>SLA</TableCell>
                   <TableCell sx={{ width: 48 }} align="center" />
                 </TableRow>
               </TableHead>
               <TableBody>
                 {carregando ? <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                       <CircularProgress size={30} />
                       <Typography variant="body2" color="text.secondary" mt={1}>Consultando o banco...</Typography>
                     </TableCell>
                   </TableRow> : filtradas.length === 0 ? <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                       <Typography fontWeight={600}>Nenhuma cobrança encontrada</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Sincronize o RBX ou ajuste o termo pesquisado.
@@ -258,6 +290,37 @@ export default function CobrancasPage() {
                     </TableCell>
                     <TableCell>
                       <Chip size="small" color={corEstado(item)} label={rotuloEstado(item)} />
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Tooltip title={item.slaPausadoEm
+                          ? `Pausado desde ${dataHora.format(new Date(item.slaPausadoEm))}`
+                          : item.slaUltimaNotificacaoEm
+                            ? `Última notificação: ${dataHora.format(new Date(item.slaUltimaNotificacaoEm))}`
+                            : `Prazo de ${item.slaHoras} hora(s) útil(eis)`}>
+                          <Chip
+                            size="small"
+                            color={item.slaPausadoEm ? 'warning'
+                              : item.slaEscalonamentoNivel > 0 ? 'error' : 'success'}
+                            label={item.slaPausadoEm ? 'PAUSADO'
+                              : item.slaEscalonamentoNivel > 0
+                                ? `NÍVEL ${item.slaEscalonamentoNivel}` : 'NO PRAZO'}
+                          />
+                        </Tooltip>
+                        <Tooltip title={item.slaPausadoEm ? 'Retomar SLA' : 'Pausar SLA'}>
+                          <IconButton size="small" color={item.slaPausadoEm ? 'success' : 'warning'}
+                            aria-label={item.slaPausadoEm ? 'Retomar SLA' : 'Pausar SLA'}
+                            onClick={event => {
+                              event.stopPropagation();
+                              setMotivoSla('');
+                              setAcaoSla({ tipo: item.slaPausadoEm ? 'retomar' : 'pausar', item });
+                            }}>
+                            {item.slaPausadoEm
+                              ? <PlayCircleOutlineRounded fontSize="small" />
+                              : <PauseCircleOutlineRounded fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     </TableCell>
                     <TableCell align="center">
                       <Tooltip title="Abrir atendimento">
@@ -322,6 +385,35 @@ export default function CobrancasPage() {
             </Grid>
           </Grid>
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(acaoSla)} onClose={() => !salvandoSla && setAcaoSla(null)}
+        fullWidth maxWidth="sm">
+        <DialogTitle>{acaoSla?.tipo === 'pausar' ? 'Pausar SLA' : 'Retomar SLA'}</DialogTitle>
+        <DialogContent>
+          <Alert severity={acaoSla?.tipo === 'pausar' ? 'warning' : 'info'} sx={{ mb: 2 }}>
+            Protocolo {acaoSla?.item?.referencia}. A ação será registrada na timeline.
+          </Alert>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            minRows={3}
+            label="Motivo"
+            value={motivoSla}
+            onChange={event => setMotivoSla(event.target.value)}
+            inputProps={{ maxLength: 500 }}
+            helperText={`${motivoSla.length}/500`}
+            disabled={salvandoSla}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAcaoSla(null)} disabled={salvandoSla}>Cancelar</Button>
+          <Button variant="contained" onClick={confirmarAcaoSla}
+            disabled={!motivoSla.trim() || salvandoSla}>
+            {salvandoSla ? <CircularProgress size={20} /> : 'Confirmar'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>;
 }

@@ -108,6 +108,18 @@ public class Cobranca {
 	@Column(name = "sla_alertado_em")
 	private OffsetDateTime slaAlertadoEm;
 
+	@Column(name = "sla_pausado_em")
+	private OffsetDateTime slaPausadoEm;
+
+	@Column(name = "sla_pausa_segundos", nullable = false, columnDefinition = "bigint default 0")
+	private long slaPausaSegundos;
+
+	@Column(name = "sla_escalonamento_nivel", nullable = false, columnDefinition = "integer default 0")
+	private int slaEscalonamentoNivel;
+
+	@Column(name = "sla_ultima_notificacao_em")
+	private OffsetDateTime slaUltimaNotificacaoEm;
+
 	@Column(name = "encerrada_em")
 	private OffsetDateTime encerradaEm;
 

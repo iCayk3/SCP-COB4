@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api', timeout: 30000 });
+import { api } from './api';
 
 export async function listarMotivos({ tipo, somenteAtivos = true } = {}) {
   const { data } = await api.get('/catalogos/motivos', {

@@ -17,32 +17,22 @@ import { useAuth } from '@/hooks/useAuth';
 // CUSTOM LAYOUT COMPONENT
 import Layout from '../Layout';
 // CUSTOM COMPONENTS
-import { Link } from '@/components/link';
 import { FlexBetween, FlexBox } from '@/components/flexbox';
 import { FormProvider, TextField } from '@/components/form';
 // CUSTOM ICON COMPONENTS
-import GoogleIcon from '@/icons/GoogleIcon';
-import Twitter from '@/icons/social/Twitter';
-import Facebook from '@/icons/social/Facebook';
-// STYLED COMPONENTS
-import { SocialButton, StyledDivider } from '../styles';
 const validationSchema = Yup.object().shape({
-  email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-  password: Yup.string().min(6, 'Password should be of minimum 6 characters length').required('Password is required'),
+  email: Yup.string().max(80).required('Informe o usuario'),
+  password: Yup.string().min(8, 'A senha deve ter ao menos 8 caracteres').required('Informe a senha'),
   remember: Yup.boolean().default(true)
 });
 export default function LoginPageView() {
   const [showPassword, setShowPassword] = useState(false);
   const {
-    signInWithEmail,
-    signInWithGoogle
+    signInWithEmail
   } = useAuth();
-  const handleGoogle = async () => {
-    await signInWithGoogle();
-  };
   const initialValues = {
-    email: 'jason@ui-lib.com',
-    password: 'dummyPass',
+    email: 'administrador',
+    password: '',
     remember: true
   };
   const methods = useForm({
@@ -71,28 +61,25 @@ export default function LoginPageView() {
         sm: 30,
         xs: 25
       }}>
-          Sign In
+          Entrar no SCP-COB4
         </Typography>
 
         <Typography variant="body2" fontWeight={500} mt={1} mb={6} color="text.secondary">
-          New user?{' '}
-          <Box fontWeight={500} component={Link} href="/register">
-            Create an Account
-          </Box>
+          Use seu identificador e senha cadastrados pelo administrador.
         </Typography>
 
         <FormProvider methods={methods} onSubmit={handleFormSubmit}>
           <Grid container spacing={2}>
             <Grid size={12}>
               <Typography variant="body1" fontSize={16} mb={1.5}>
-                Login with your email id
+                Usuario
               </Typography>
 
-              <TextField fullWidth name="email" placeholder="Enter your work email" />
+              <TextField fullWidth name="email" placeholder="Informe seu identificador" />
             </Grid>
 
             <Grid size={12}>
-              <TextField fullWidth placeholder="Password" type={showPassword ? 'text' : 'password'} name="password" slotProps={{
+              <TextField fullWidth placeholder="Senha" type={showPassword ? 'text' : 'password'} name="password" slotProps={{
               input: {
                 endAdornment: <ButtonBase disableRipple disableTouchRipple onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
@@ -106,39 +93,21 @@ export default function LoginPageView() {
                   p: 0
                 }} name="remember" checked={watch('remember')} onChange={e => setValue('remember', e.target.checked)} />
                   <Typography variant="body2" fontWeight={500}>
-                    Remember me
+                    Manter conectado
                   </Typography>
                 </FlexBox>
 
-                <Box fontSize={13} component={Link} fontWeight={500} color="error.500" href="/forget-password">
-                  Forget Password?
-                </Box>
               </FlexBetween>
             </Grid>
 
             <Grid size={12}>
               <Button fullWidth type="submit" variant="contained" disabled={!isValid} loading={isSubmitting}>
-                Sign In
+                Entrar
               </Button>
             </Grid>
           </Grid>
         </FormProvider>
 
-        <StyledDivider>OR</StyledDivider>
-
-        <FlexBox justifyContent="center" flexWrap="wrap" gap={2}>
-          <SocialButton onClick={handleGoogle}>
-            <GoogleIcon className="icon" />
-          </SocialButton>
-
-          <SocialButton>
-            <Facebook className="icon facebook" />
-          </SocialButton>
-
-          <SocialButton>
-            <Twitter className="icon twitter" />
-          </SocialButton>
-        </FlexBox>
       </Box>
     </Layout>;
 }

@@ -31,6 +31,7 @@ const Metricas = lazy(() => import('@/pages/metricas'));
 const Backlog = lazy(() => import('@/pages/backlog'));
 const Lgpd = lazy(() => import('@/pages/lgpd'));
 const ConfiguracaoSincronizacao = lazy(() => import('@/pages/configuracao-sincronizacao'));
+const Usuarios = lazy(() => import('@/pages/usuarios'));
 
 // USER LIST PAGES
 const AddNewUser = lazy(() => import('@/pages/users/add-new-user'));
@@ -153,6 +154,9 @@ export const DashboardRoutes = [{
     }, {
       path: 'sincronizacao-rbx',
       element: <ConfiguracaoSincronizacao />
+    }, {
+      path: 'usuarios',
+      element: <Usuarios />
     }]
   }, {
     path: 'planejamento',

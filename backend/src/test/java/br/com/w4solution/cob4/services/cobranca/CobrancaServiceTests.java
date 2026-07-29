@@ -41,7 +41,7 @@ class CobrancaServiceTests {
 	@Mock FaixaAtrasoConfigService faixaAtrasoService;
 
 	@Test
-	void criaUmProtocoloParaCadaContratoDoMesmoCliente() {
+	void criaUmProtocoloPorContratoSemDuplicarDocumentoRepetido() {
 		ClienteRbxDTO clienteRbx = new ClienteRbxDTO(
 				"10", "Maria Teste", null, null, "(91) 99999-0000",
 				null, null, null, null, null, null, null, null, "B",
@@ -49,6 +49,8 @@ class CobrancaServiceTests {
 		String ontem = LocalDate.now().minusDays(1).toString();
 		when(serviceRbx.buscarTodosClientes()).thenReturn(List.of(clienteRbx));
 		when(serviceRbx.buscarTodosBoletosAbertos()).thenReturn(List.of(
+				new BoletosAbertos(100, "10", ontem, "DOC-1", "CON-1", "CON-VINC-1",
+						"Maria Teste", "12345678900", "(91) 99999-0000", null, null, "1", "1"),
 				new BoletosAbertos(100, "10", ontem, "DOC-1", "CON-1", "CON-VINC-1",
 						"Maria Teste", "12345678900", "(91) 99999-0000", null, null, "1", "1"),
 				new BoletosAbertos(200, "10", ontem, "DOC-2", "CON-2", "CON-VINC-2",
@@ -89,6 +91,7 @@ class CobrancaServiceTests {
 
 		assertThat(resultado.cobrancasCriadas()).isEqualTo(2);
 		assertThat(resultado.boletosCriados()).isEqualTo(2);
+		assertThat(resultado.documentosRecebidos()).isEqualTo(3);
 		assertThat(resultado.valorTotalProcessado()).isEqualByComparingTo("300.00");
 		assertThat(cobrancasSalvas).extracting(Cobranca::getContratoReferencia)
 				.containsExactlyInAnyOrder("CON-VINC-1", "CON-VINC-2");

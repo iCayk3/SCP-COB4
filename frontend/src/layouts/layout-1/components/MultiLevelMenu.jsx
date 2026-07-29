@@ -55,7 +55,10 @@ export default function MultiLevelMenu({
 
   // RECURSIVE FUNCTION TO RENDER MULTI LEVEL MENU
   const renderLevels = data => {
-    return data.map((item, index) => {
+    const role = (user?.perfil || user?.role || '').toString().toLowerCase();
+    const isAdministrator = ['administrador', 'administrator', 'admin'].includes(role);
+    return data.filter(item => isAdministrator || !item.access
+      || item.access.toString().toLowerCase() === role).map((item, index) => {
       // MENU LABEL DESIGN
       if (item.type === 'label') {
         return <ListLabel key={index} compact={sidebarCompact}>
@@ -92,7 +95,10 @@ export default function MultiLevelMenu({
 
   // USER ROLE BASED ON FILTER NAVIGATION
   const filterNavigation = useMemo(() => {
-    return navigations.filter(nav => !nav.access || nav.access === user?.role);
-  }, [user?.role]);
+    const role = (user?.perfil || user?.role || '').toString().toLowerCase();
+    const isAdministrator = ['administrador', 'administrator', 'admin'].includes(role);
+    return navigations.filter(nav => isAdministrator || !nav.access
+      || nav.access.toString().toLowerCase() === role);
+  }, [user?.perfil, user?.role]);
   return <>{renderLevels(filterNavigation)}</>;
 }

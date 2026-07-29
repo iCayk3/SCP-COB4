@@ -13,8 +13,12 @@ export function AuthGuard({
     pathname
   } = useLocation();
   const {
-    isAuthenticated
+    isAuthenticated,
+    user
   } = useAuth();
+  if (isAuthenticated && user?.trocaSenhaObrigatoria && pathname !== '/trocar-senha') {
+    return <Navigate replace to="/trocar-senha" />;
+  }
   if (isAuthenticated) return <>{children}</>;
   return <Navigate replace to="/login" state={{
     from: pathname

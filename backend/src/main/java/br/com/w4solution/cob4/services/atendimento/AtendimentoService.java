@@ -11,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import br.com.w4solution.cob4.services.fluxo.EstadoProcessoService;
 import br.com.w4solution.cob4.dto.fluxo.AlterarEstadoDTO;
+import br.com.w4solution.cob4.security.UsuarioAtualService;
 
 @Service
 public class AtendimentoService {
@@ -20,22 +21,26 @@ public class AtendimentoService {
 	private final ProcessoTimelineRepository timelineRepository;
 	private final TarefaCobrancaRepository tarefaRepository;
 	private final EstadoProcessoService estadoProcessoService;
+	private final UsuarioAtualService usuarioAtualService;
 
 	public AtendimentoService(CobrancaRepository cobrancaRepository, AtendimentoRepository atendimentoRepository,
 							  AtendimentoMensagemRepository mensagemRepository,
 							  ProcessoTimelineRepository timelineRepository,
 							  TarefaCobrancaRepository tarefaRepository,
-							  EstadoProcessoService estadoProcessoService) {
+							  EstadoProcessoService estadoProcessoService,
+							  UsuarioAtualService usuarioAtualService) {
 		this.cobrancaRepository = cobrancaRepository;
 		this.atendimentoRepository = atendimentoRepository;
 		this.mensagemRepository = mensagemRepository;
 		this.timelineRepository = timelineRepository;
 		this.tarefaRepository = tarefaRepository;
 		this.estadoProcessoService = estadoProcessoService;
+		this.usuarioAtualService = usuarioAtualService;
 	}
 
 	@Transactional
 	public AtendimentoResumoDTO registrar(String referencia, RegistrarAtendimentoDTO dados) {
+		var usuario = usuarioAtualService.atual();
 		Cobranca processo = cobrancaRepository.findByReferencia(referencia)
 				.orElseThrow(() -> new IllegalArgumentException("Processo não encontrado"));
 		if (processo.encerrada()) {
@@ -48,8 +53,8 @@ public class AtendimentoService {
 		atendimento.setResultado(dados.resultado());
 		atendimento.setObservacao(dados.observacao().trim());
 		atendimento.setProximaAcao(dados.proximaAcao().trim());
-		atendimento.setOperadorNome(dados.operadorNome().trim());
-		atendimento.setOperadorIdentificador(dados.operadorIdentificador().trim());
+		atendimento.setOperadorNome(usuario.nome());
+		atendimento.setOperadorIdentificador(usuario.identificador());
 		atendimento.setRealizadoEm(agora);
 		atendimentoRepository.save(atendimento);
 
@@ -65,31 +70,35 @@ public class AtendimentoService {
 		if ("NOVO".equals(processo.getEstadoFluxo())
 				&& mensagens.stream().anyMatch(m -> m.getAutor() == AtendimentoMensagem.Autor.CLIENTE)) {
 			estadoProcessoService.alterar(referencia, new AlterarEstadoDTO(
-					"EM_ATENDIMENTO", dados.operadorNome(), dados.operadorIdentificador(),
+					"EM_ATENDIMENTO", usuario.nome(), usuario.identificador(),
 					"CONTATO_REALIZADO",
 					"Cliente respondeu pelo chat."));
 		}
 		if ("NOVO".equals(processo.getEstadoFluxo()) && dados.resultado() == Atendimento.Resultado.SEM_CONTATO) {
 			estadoProcessoService.alterar(referencia, new AlterarEstadoDTO(
-					"SEM_CONTATO", dados.operadorNome(), dados.operadorIdentificador(),
+					"SEM_CONTATO", usuario.nome(), usuario.identificador(),
 					"SEM_RETORNO_DO_CLIENTE",
 					"Tentativa por ligação concluída sem contato."));
 		}
 
 		processo.setStatus(Cobranca.Status.EM_ANDAMENTO);
-		processo.setOperadorNome(dados.operadorNome().trim());
-		processo.setOperadorIdentificador(dados.operadorIdentificador().trim());
+		processo.setOperadorNome(usuario.nome());
+		processo.setOperadorIdentificador(usuario.identificador());
 		processo.setUltimaMovimentacaoEm(agora);
 		processo.setAtualizadaEm(agora);
 		processo.setSlaAlertadoEm(null);
+		processo.setSlaPausadoEm(null);
+		processo.setSlaPausaSegundos(0);
+		processo.setSlaEscalonamentoNivel(0);
+		processo.setSlaUltimaNotificacaoEm(null);
 		cobrancaRepository.save(processo);
 
 		ProcessoTimeline timeline = new ProcessoTimeline();
 		timeline.setCobranca(processo);
 		timeline.setEvento("ATENDIMENTO_REGISTRADO");
 		timeline.setDescricao("Atendimento via chat: " + dados.resultado() + ". " + dados.observacao().trim());
-		timeline.setAutorNome(dados.operadorNome().trim());
-		timeline.setAutorIdentificador(dados.operadorIdentificador().trim());
+		timeline.setAutorNome(usuario.nome());
+		timeline.setAutorIdentificador(usuario.identificador());
 		timeline.setCriadoEm(agora);
 		timelineRepository.save(timeline);
 

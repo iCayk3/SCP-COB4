@@ -39,8 +39,8 @@ export default function LgpdPage() {
     }
   };
   const dadosSolicitacao = extra => ({
-    cpf: cpfTitular, motivo: motivoSolicitacao, usuario: 'Administrador SGC',
-    perfil: 'ADMINISTRADOR', ...extra
+    cpf: cpfTitular, motivo: motivoSolicitacao,
+    ...extra
   });
   const exportar = async () => {
     setErro(''); setSucesso('');

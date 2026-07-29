@@ -14,6 +14,7 @@ import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
+import br.com.w4solution.cob4.security.UsuarioAtualService;
 
 @Service
 public class EstadoProcessoService {
@@ -23,15 +24,18 @@ public class EstadoProcessoService {
 	private final FluxoTransicaoRepository transicaoRepository;
 	private final ProcessoTimelineRepository timelineRepository;
 	private final MotivoCatalogoService motivoService;
+	private final UsuarioAtualService usuarioAtualService;
 
 	public EstadoProcessoService(CobrancaRepository cobrancaRepository, FluxoCobrancaRepository fluxoRepository,
 								 FluxoEstadoRepository estadoRepository, FluxoTransicaoRepository transicaoRepository,
 								 ProcessoTimelineRepository timelineRepository,
-								 MotivoCatalogoService motivoService) {
+								 MotivoCatalogoService motivoService,
+								 UsuarioAtualService usuarioAtualService) {
 		this.cobrancaRepository = cobrancaRepository; this.fluxoRepository = fluxoRepository;
 		this.estadoRepository = estadoRepository; this.transicaoRepository = transicaoRepository;
 		this.timelineRepository = timelineRepository;
 		this.motivoService = motivoService;
+		this.usuarioAtualService = usuarioAtualService;
 	}
 
 	@Transactional(readOnly = true)
@@ -52,6 +56,7 @@ public class EstadoProcessoService {
 
 	@Transactional
 	public EstadoProcessoDTO alterar(String referencia, AlterarEstadoDTO dados) {
+		var usuario = usuarioAtualService.atual();
 		Cobranca processo = processo(referencia);
 		FluxoCobranca fluxo = fluxo(processo);
 		String destino = FluxoService.normalizar(dados.destino());
@@ -61,13 +66,14 @@ public class EstadoProcessoService {
 				.orElseThrow(() -> new IllegalStateException("Transição não permitida pelo fluxo"));
 		var motivo = motivoService.validarAtivo(motivoService.tipoParaDestino(destino),
 				dados.motivoCodigo(), dados.observacao());
-		mover(processo, destino, dados.operadorNome(), dados.operadorIdentificador(),
+		mover(processo, destino, usuario.nome(), usuario.identificador(),
 				motivo.getCodigo(), motivo.getNome(), dados.observacao());
 		return consultar(referencia);
 	}
 
 	@Transactional
 	public ResultadoAlteracaoLoteDTO alterarEmLote(AlterarEstadoLoteDTO dados) {
+		var usuario = usuarioAtualService.atual();
 		List<String> referencias = new LinkedHashSet<>(dados.referencias()).stream().toList();
 		if (referencias.size() < 2) {
 			throw new IllegalArgumentException("Selecione pelo menos dois protocolos");
@@ -99,7 +105,7 @@ public class EstadoProcessoService {
 		var motivoCatalogado = motivoService.validarAtivo(motivoService.tipoParaDestino(destino),
 				dados.motivoCodigo(), dados.observacao());
 		for (Cobranca processo : processos) {
-			mover(processo, destino, dados.operadorNome(), dados.operadorIdentificador(),
+			mover(processo, destino, usuario.nome(), usuario.identificador(),
 					motivoCatalogado.getCodigo(), motivoCatalogado.getNome(), observacao);
 		}
 		return new ResultadoAlteracaoLoteDTO(operacaoId, referencias, destino);
@@ -107,6 +113,7 @@ public class EstadoProcessoService {
 
 	@Transactional
 	public EstadoProcessoDTO atribuirFluxo(String referencia, br.com.w4solution.cob4.dto.fluxo.AtribuirFluxoDTO dados) {
+		var usuario = usuarioAtualService.atual();
 		Cobranca processo = processo(referencia);
 		FluxoCobranca novoFluxo = fluxoRepository.findByCodigo(dados.fluxoCodigo())
 				.filter(FluxoCobranca::isAtivo)
@@ -124,7 +131,7 @@ public class EstadoProcessoService {
 		timeline.setCobranca(processo); timeline.setEvento("FLUXO_ATRIBUIDO");
 		timeline.setDescricao("Fluxo alterado de " + fluxoAnterior + "/" + estadoAnterior + " para "
 				+ novoFluxo.getCodigo() + "/" + inicial.getCodigo());
-		timeline.setAutorNome(dados.operadorNome()); timeline.setAutorIdentificador(dados.operadorIdentificador());
+		timeline.setAutorNome(usuario.nome()); timeline.setAutorIdentificador(usuario.identificador());
 		timeline.setCriadoEm(agora); timelineRepository.save(timeline);
 		return consultar(referencia);
 	}

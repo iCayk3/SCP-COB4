@@ -11,6 +11,7 @@ import {
 } from '@/services/fluxos';
 import { useAuth } from '@/hooks/useAuth';
 import { listarMotivos } from '@/services/catalogos';
+import { Agenda, Anexos, AtualizacaoCadastral } from './Cliente360Extras';
 
 const moeda = valor => Number(valor || 0).toLocaleString('pt-BR', {
   style: 'currency', currency: 'BRL'
@@ -144,9 +145,13 @@ export default function ClientInfoPanel({ processo, onAtualizar }) {
         <Chip size="small" color="primary"
           label={`${visao?.protocolos?.length || 0} protocolo(s) ativo(s)`} />
       </Stack>
-      <Tabs value={aba} onChange={(_, valor) => setAba(valor)} variant="fullWidth">
-        <Tab label="Cliente" />
-        <Tab label="Log" />
+      <Tabs value={aba} onChange={(_, valor) => setAba(valor)} variant="scrollable"
+        aria-label="Seções do Cliente 360">
+        <Tab label="Cliente" id="cliente360-tab-0" aria-controls="cliente360-panel-0" />
+        <Tab label="Timeline" id="cliente360-tab-1" aria-controls="cliente360-panel-1" />
+        <Tab label="Agenda" id="cliente360-tab-2" aria-controls="cliente360-panel-2" />
+        <Tab label="Anexos" id="cliente360-tab-3" aria-controls="cliente360-panel-3" />
+        <Tab label="Cadastro" id="cliente360-tab-4" aria-controls="cliente360-panel-4" />
       </Tabs>
       <Divider />
       {carregando && !visao && <Box textAlign="center"><CircularProgress size={24} /></Box>}
@@ -154,6 +159,9 @@ export default function ClientInfoPanel({ processo, onAtualizar }) {
       {sucesso && <Alert severity="success">{sucesso}</Alert>}
 
       {aba === 1 && <LogTimeline timeline={timeline} />}
+      {aba === 2 && <Agenda processo={processo} />}
+      {aba === 3 && <Anexos processo={processo} />}
+      {aba === 4 && <AtualizacaoCadastral processo={processo} />}
 
       {aba === 0 && visao && <>
         <Box>

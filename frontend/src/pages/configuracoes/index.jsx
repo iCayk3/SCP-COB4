@@ -3,6 +3,12 @@ import { Link } from 'react-router';
 
 const MODULOS = [
   {
+    titulo: 'Gestao de usuarios',
+    descricao: 'Cadastre usuários, defina perfis, bloqueios, presença, capacidade e senhas temporárias.',
+    caminho: '/dashboard/configuracoes/usuarios',
+    categoria: 'Seguranca'
+  },
+  {
     titulo: 'Sincronizacao automatica RBX',
     descricao: 'Defina os dois horarios diarios da sincronizacao e ative ou desative a rotina automatica.',
     caminho: '/dashboard/configuracoes/sincronizacao-rbx',

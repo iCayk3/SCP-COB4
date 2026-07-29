@@ -7,10 +7,12 @@ import {
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import SendRounded from '@mui/icons-material/SendRounded';
 import TaskAltRounded from '@mui/icons-material/TaskAltRounded';
+import AttachFileRounded from '@mui/icons-material/AttachFileRounded';
 import { FlexBetween, FlexBox } from '@/components/flexbox';
 import { Scrollbar } from '@/components/scrollbar';
 import { StyledIconButton, ToggleBtn } from './styles';
 import { listarAtendimentos, registrarAtendimento } from '@/services/atendimentos';
+import { enviarAnexo } from '@/services/atendimentos';
 import { useAuth } from '@/hooks/useAuth';
 
 const RESULTADOS = [
@@ -48,6 +50,17 @@ export default function Conversation({ handleOpen, processo }) {
       autor: 'OPERADOR', mensagem: texto.trim(), enviadaEm: new Date().toISOString()
     }]);
     setTexto('');
+  };
+  const anexar = async event => {
+    const arquivo = event.target.files?.[0];
+    if (!arquivo) return;
+    setSalvando(true); setErro('');
+    try {
+      await enviarAnexo(processo.referencia, arquivo);
+      setSucesso(true);
+    } catch (error) {
+      setErro(error.response?.data?.erro || error.response?.data?.message || 'Não foi possível anexar o arquivo.');
+    } finally { setSalvando(false); event.target.value = ''; }
   };
 
   const salvar = async () => {
@@ -144,10 +157,15 @@ export default function Conversation({ handleOpen, processo }) {
     {erro && <Alert severity="error" onClose={() => setErro('')}>{erro}</Alert>}
     <Box px={3} py={2} sx={{ flexShrink: 0 }}>
       <FlexBetween gap={2}>
+        <Button component="label" size="small" startIcon={<AttachFileRounded />} disabled={salvando}>
+          Anexar
+          <input hidden type="file" accept=".pdf,.png,.jpg,.jpeg,.txt" onChange={anexar} />
+        </Button>
         <InputBase fullWidth value={texto} onChange={e => setTexto(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') enviar(); }}
+          inputProps={{ 'aria-label': 'Mensagem do atendimento' }}
           placeholder="Digite a mensagem do atendimento..." />
-        <StyledIconButton onClick={enviar}><SendRounded /></StyledIconButton>
+        <StyledIconButton onClick={enviar} aria-label="Enviar mensagem"><SendRounded /></StyledIconButton>
       </FlexBetween>
       <FlexBetween mt={2}>
         <Typography variant="caption" color="text.secondary">

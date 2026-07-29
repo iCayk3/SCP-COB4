@@ -33,7 +33,7 @@ public class PrivacidadeService {
 
 	@Transactional
 	public ExportacaoTitularDTO exportar(SolicitacaoPrivacidadeDTO dados) {
-		autorizacaoService.exigir(dados.perfil(), AcaoSistema.EXPORTAR_DADOS);
+		var usuario = autorizacaoService.exigir(AcaoSistema.EXPORTAR_DADOS);
 		var cliente = clienteRepository.findByCpf(dados.cpf())
 				.orElseThrow(() -> new IllegalArgumentException("Titular não encontrado"));
 		var protocolos = cobrancaRepository.findByCpfAgregadorInAndStatusIn(
@@ -41,7 +41,7 @@ public class PrivacidadeService {
 				.stream().map(c -> new ExportacaoTitularDTO.ProtocoloDTO(c.getReferencia(), c.getContratoReferencia(),
 						c.getStatus().name(), c.getEstadoFluxo(), c.getValorTotal().toPlainString())).toList();
 		var log = new LogAuditoria(); log.setEvento("DADOS_TITULAR_EXPORTADOS");
-		log.setUsuarioNome(dados.usuario()); log.setUsuarioIdentificador(dados.usuario());
+		log.setUsuarioNome(usuario.nome()); log.setUsuarioIdentificador(usuario.identificador());
 		log.setDescricao("Exportação solicitada. Motivo: " + dados.motivo());
 		log.setCriadoEm(OffsetDateTime.now()); logRepository.save(log);
 		return new ExportacaoTitularDTO(cliente.getCpf(), cliente.getNomeCompleto(), cliente.getTelefone(),
@@ -50,7 +50,7 @@ public class PrivacidadeService {
 
 	@Transactional
 	public String anonimizar(SolicitacaoPrivacidadeDTO dados) {
-		autorizacaoService.exigir(dados.perfil(), AcaoSistema.ANONIMIZAR_DADOS);
+		var usuario = autorizacaoService.exigir(AcaoSistema.ANONIMIZAR_DADOS);
 		if (!"ANONIMIZAR".equals(dados.confirmacao())) throw new IllegalArgumentException("Confirmação de anonimização inválida");
 		if (politicaRepository.count() == 0 || politicaRepository.count() !=
 				politicaRepository.countByStatusAprovacao(PoliticaLgpd.StatusAprovacao.APROVADA)) {
@@ -65,7 +65,7 @@ public class PrivacidadeService {
 		cliente.setTelefone(null); cliente.setEmail(null); cliente.setRbxCodigo(null);
 		cliente.setAtualizadoEm(OffsetDateTime.now()); clienteRepository.save(cliente);
 		var log = new LogAuditoria(); log.setEvento("TITULAR_ANONIMIZADO");
-		log.setUsuarioNome(dados.usuario()); log.setUsuarioIdentificador(dados.usuario());
+		log.setUsuarioNome(usuario.nome()); log.setUsuarioIdentificador(usuario.identificador());
 		log.setDescricao("Anonimização executada. Motivo: " + dados.motivo());
 		log.setCriadoEm(OffsetDateTime.now()); logRepository.save(log);
 		return anonimo;

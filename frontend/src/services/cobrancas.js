@@ -1,9 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  timeout: 120000
-});
+import { api } from './api';
 
 export async function listarCobrancasAbertas() {
   const { data } = await api.get('/cobrancas/abertas');
@@ -22,6 +17,21 @@ export async function sincronizarCobrancasRbx() {
 
 export async function listarSincronizacoesRbx() {
   const { data } = await api.get('/cobrancas/sincronizacoes-rbx');
+  return data;
+}
+
+export async function listarFalhasSincronizacoesRbx() {
+  const { data } = await api.get('/cobrancas/sincronizacoes-rbx/falhas');
+  return data;
+}
+
+export async function reprocessarFalhaSincronizacaoRbx(id) {
+  const { data } = await api.post(`/cobrancas/sincronizacoes-rbx/falhas/${encodeURIComponent(id)}/reprocessar`);
+  return data;
+}
+
+export async function reconciliarCobrancasRbx() {
+  const { data } = await api.post('/cobrancas/sincronizacoes-rbx/reconciliar');
   return data;
 }
 
@@ -48,6 +58,14 @@ export async function listarTarefas(responsavelIdentificador) {
 export async function atualizarTarefa(id, status) {
   const { data } = await api.put(`/cobrancas/tarefas/${id}`, { status });
   return data;
+}
+
+export async function pausarSla(referencia, motivo) {
+  await api.post(`/cobrancas/${encodeURIComponent(referencia)}/sla/pausar`, { motivo });
+}
+
+export async function retomarSla(referencia, motivo) {
+  await api.post(`/cobrancas/${encodeURIComponent(referencia)}/sla/retomar`, { motivo });
 }
 
 export async function listarPromessas(referencia) {

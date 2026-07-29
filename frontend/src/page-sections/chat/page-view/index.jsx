@@ -8,12 +8,14 @@ import Conversation from '../conversation';
 import ClientInfoPanel from '../ClientInfoPanel';
 import { buscarCobrancasParaAtendimento } from '@/services/cobrancas';
 import { gerarSimulacoesAtendimento } from '@/services/atendimentos';
+import { useSearchParams } from 'react-router';
 
 export default function ChatPageView() {
+  const [searchParams] = useSearchParams();
   const [processos, setProcessos] = useState([]);
   const [selecionado, setSelecionado] = useState(null);
-  const [busca, setBusca] = useState('');
-  const [buscaAplicada, setBuscaAplicada] = useState('');
+  const [busca, setBusca] = useState(searchParams.get('busca') || '');
+  const [buscaAplicada, setBuscaAplicada] = useState(searchParams.get('busca') || '');
   const [pagina, setPagina] = useState(0);
   const [paginacao, setPaginacao] = useState({ totalElementos: 0, totalPaginas: 0, primeira: true, ultima: true });
   const [erro, setErro] = useState('');
@@ -72,7 +74,8 @@ export default function ChatPageView() {
           </Button>
         </Stack>
         <TextField fullWidth size="small" value={busca} onChange={e => setBusca(e.target.value)}
-          placeholder="Buscar cliente, CPF ou processo" />
+          label="Buscar atendimentos" placeholder="Cliente, CPF ou protocolo"
+          inputProps={{ 'aria-label': 'Buscar cliente, CPF ou protocolo' }} />
       </Box>
       {carregando ? <Box textAlign="center" py={4}><CircularProgress size={28} /></Box>
         : <AllMessages processos={processos} selecionado={selecionado} onSelecionar={selecionar}

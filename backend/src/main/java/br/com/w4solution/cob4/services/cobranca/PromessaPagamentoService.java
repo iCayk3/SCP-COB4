@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import br.com.w4solution.cob4.security.UsuarioAtualService;
 
 @Service
 public class PromessaPagamentoService {
@@ -21,14 +22,16 @@ public class PromessaPagamentoService {
 	private final CobrancaRepository cobrancaRepository;
 	private final ProcessoTimelineRepository timelineRepository;
 	private final TarefaCobrancaRepository tarefaRepository;
+	private final UsuarioAtualService usuarioAtualService;
 
 	public PromessaPagamentoService(PromessaPagamentoRepository promessaRepository,
 			CobrancaRepository cobrancaRepository, ProcessoTimelineRepository timelineRepository,
-			TarefaCobrancaRepository tarefaRepository) {
+			TarefaCobrancaRepository tarefaRepository, UsuarioAtualService usuarioAtualService) {
 		this.promessaRepository = promessaRepository;
 		this.cobrancaRepository = cobrancaRepository;
 		this.timelineRepository = timelineRepository;
 		this.tarefaRepository = tarefaRepository;
+		this.usuarioAtualService = usuarioAtualService;
 	}
 
 	@Transactional(readOnly = true)
@@ -39,6 +42,7 @@ public class PromessaPagamentoService {
 
 	@Transactional
 	public PromessaPagamentoDTO registrar(String referencia, RegistrarPromessaDTO dados) {
+		var usuario = usuarioAtualService.atual();
 		Cobranca cobranca = cobrancaRepository.findByReferencia(referencia)
 				.orElseThrow(() -> new IllegalArgumentException("Processo nao encontrado"));
 		if (cobranca.encerrada()) throw new IllegalStateException("Processo encerrado nao aceita promessa");
@@ -47,8 +51,8 @@ public class PromessaPagamentoService {
 		promessa.setCobranca(cobranca);
 		promessa.setValor(dados.valor());
 		promessa.setVencimento(dados.vencimento());
-		promessa.setOperadorNome(dados.operadorNome().trim());
-		promessa.setOperadorIdentificador(dados.operadorIdentificador().trim());
+		promessa.setOperadorNome(usuario.nome());
+		promessa.setOperadorIdentificador(usuario.identificador());
 		promessa.setObservacao(limpar(dados.observacao()));
 		promessa.setCriadaEm(agora);
 		promessa.setAtualizadaEm(agora);
@@ -60,7 +64,7 @@ public class PromessaPagamentoService {
 		PromessaPagamento salva = promessaRepository.save(promessa);
 		timeline(cobranca, "PROMESSA_REGISTRADA",
 				"Promessa registrada no valor de " + dados.valor() + " para " + dados.vencimento(),
-				dados.operadorNome(), dados.operadorIdentificador(), agora);
+				usuario.nome(), usuario.identificador(), agora);
 		return dto(salva);
 	}
 

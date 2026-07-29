@@ -32,7 +32,7 @@ public class ProcessoService {
 
 	@Transactional
 	public void reabrir(String referencia, ReabrirProcessoDTO dados) {
-		autorizacaoService.exigir(dados.perfil(), AcaoSistema.REABRIR_PROTOCOLO);
+		var usuario = autorizacaoService.exigir(AcaoSistema.REABRIR_PROTOCOLO);
 		Cobranca processo = cobrancaRepository.findByReferencia(referencia)
 				.orElseThrow(() -> new IllegalArgumentException("Processo não encontrado"));
 		if (!processo.encerrada()) throw new IllegalStateException("Somente processos encerrados podem ser reabertos");
@@ -47,22 +47,27 @@ public class ProcessoService {
 		processo.setMotivoReaberturaCodigo(motivo.getCodigo());
 		processo.setMotivoReaberturaNome(motivo.getNome());
 		processo.setObservacaoReabertura(limpar(dados.observacao()));
-		processo.setOperadorNome(dados.operadorNome().trim());
-		processo.setOperadorIdentificador(dados.operadorIdentificador().trim());
+		processo.setOperadorNome(usuario.nome());
+		processo.setOperadorIdentificador(usuario.identificador());
 		processo.setUltimaMovimentacaoEm(agora); processo.setAtualizadaEm(agora);
+		processo.setSlaAlertadoEm(null);
+		processo.setSlaPausadoEm(null);
+		processo.setSlaPausaSegundos(0);
+		processo.setSlaEscalonamentoNivel(0);
+		processo.setSlaUltimaNotificacaoEm(null);
 		cobrancaRepository.save(processo);
 		ProcessoTimeline timeline = new ProcessoTimeline();
 		timeline.setCobranca(processo); timeline.setEvento("PROCESSO_REABERTO");
 		timeline.setDescricao("Processo reaberto. Motivo [" + motivo.getCodigo() + "]: " + motivo.getNome()
 				+ complemento(dados.observacao()));
-		timeline.setAutorNome(dados.operadorNome().trim());
-		timeline.setAutorIdentificador(dados.operadorIdentificador().trim());
+		timeline.setAutorNome(usuario.nome());
+		timeline.setAutorIdentificador(usuario.identificador());
 		timeline.setCriadoEm(agora); timelineRepository.save(timeline);
 	}
 
 	@Transactional
 	public void encerrar(String referencia, EncerrarProcessoDTO dados) {
-		autorizacaoService.exigir(dados.perfil(), AcaoSistema.ENCERRAR_PROTOCOLO);
+		var usuario = autorizacaoService.exigir(AcaoSistema.ENCERRAR_PROTOCOLO);
 		Cobranca processo = cobrancaRepository.findByReferencia(referencia)
 				.orElseThrow(() -> new IllegalArgumentException("Processo não encontrado"));
 		if (processo.encerrada()) {
@@ -77,8 +82,8 @@ public class ProcessoService {
 		processo.setMotivoEncerramentoNome(motivo.getNome());
 		processo.setObservacaoEncerramento(limpar(dados.observacao()));
 		processo.setEncerradaEm(agora);
-		processo.setOperadorNome(dados.operadorNome().trim());
-		processo.setOperadorIdentificador(dados.operadorIdentificador().trim());
+		processo.setOperadorNome(usuario.nome());
+		processo.setOperadorIdentificador(usuario.identificador());
 		processo.setUltimaMovimentacaoEm(agora);
 		processo.setAtualizadaEm(agora);
 		cobrancaRepository.save(processo);
@@ -88,8 +93,8 @@ public class ProcessoService {
 		timeline.setEvento("PROCESSO_ENCERRADO");
 		timeline.setDescricao("Processo encerrado. Motivo [" + motivo.getCodigo() + "]: " + motivo.getNome()
 				+ complemento(dados.observacao()));
-		timeline.setAutorNome(dados.operadorNome().trim());
-		timeline.setAutorIdentificador(dados.operadorIdentificador().trim());
+		timeline.setAutorNome(usuario.nome());
+		timeline.setAutorIdentificador(usuario.identificador());
 		timeline.setCriadoEm(agora);
 		timelineRepository.save(timeline);
 	}
