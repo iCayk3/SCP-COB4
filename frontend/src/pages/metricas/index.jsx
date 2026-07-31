@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Chip, Grid, LinearProgress, Stack, TextField, Typography
 } from '@mui/material';
-import { consultarMetricas, gerarFechamento, listarFechamentos } from '@/services/planejamento';
+import { consultarMetricas, gerarFechamento, listarFechamentos, aprovarFechamento, cancelarFechamento } from '@/services/planejamento';
+import { exportarFechamento } from '@/services/financeiro';
 
 const mesAtual = new Date().toISOString().slice(0, 7);
 const cores = { DISPONIVEL: 'success', PARCIAL: 'warning', INDISPONIVEL: 'default' };
@@ -38,6 +39,16 @@ export default function MetricasPage() {
     } catch {
       setErro('Nao foi possivel gerar o fechamento da competencia.');
     } finally { setGerando(false); }
+  };
+  const acaoFechamento = async (acao, item) => {
+    setErro('');
+    try {
+      if (acao === 'aprovar') await aprovarFechamento(item.id);
+      else await cancelarFechamento(item.id, 'Cancelamento solicitado na tela financeira');
+      await carregarFechamentos(competencia);
+    } catch (error) {
+      setErro(error.response?.data?.message || 'Nao foi possivel alterar o fechamento.');
+    }
   };
 
   return <Stack spacing={3}>
@@ -103,6 +114,11 @@ export default function MetricasPage() {
           <Chip label={`${item.protocolosEncerrados} encerrado(s)`} />
           <Chip label={`${item.promessasCriadas} promessa(s)`} />
           <Chip label={`${item.atendimentosRegistrados} atendimento(s)`} />
+          <Chip label={`${item.divergenciasAbertas || 0} divergencia(s)`} color={item.divergenciasAbertas ? 'warning' : 'default'} />
+          {item.status === 'GERADO' && <Button size="small" onClick={() => acaoFechamento('aprovar', item)}>Aprovar</Button>}
+          {item.status === 'APROVADO' && <Button size="small" color="error" onClick={() => acaoFechamento('cancelar', item)}>Cancelar</Button>}
+          {['csv', 'xlsx', 'pdf'].map(formato => <Button key={formato} size="small" variant="outlined"
+            onClick={() => exportarFechamento(item.id, formato)}>{formato.toUpperCase()}</Button>)}
         </Stack>
       </Stack>)}
     </Stack></CardContent></Card>

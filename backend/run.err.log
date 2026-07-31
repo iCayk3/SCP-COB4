@@ -1,0 +1,8 @@
+icm : NÆo ‚ poss¡vel indexar em uma matriz nula.
+No linha:1 caractere:96
++ ... 'mvnw.cmd'; icm -ScriptBlock ([Scriptblock]::Create((Get-Content -Raw ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Invoke-Command], RuntimeException
+    + FullyQualifiedErrorId : NullArray,Microsoft.PowerShell.Commands.InvokeCommandCommand
+ 
+Cannot start maven from wrapper  

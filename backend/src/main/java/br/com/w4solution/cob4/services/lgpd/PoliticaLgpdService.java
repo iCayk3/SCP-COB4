@@ -7,11 +7,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.OffsetDateTime;
+import br.com.w4solution.cob4.security.UsuarioAtualService;
 
 @Service
 public class PoliticaLgpdService {
 	private final PoliticaLgpdRepository repository;
-	public PoliticaLgpdService(PoliticaLgpdRepository repository) { this.repository = repository; }
+	private final UsuarioAtualService usuarioAtual;
+	@org.springframework.beans.factory.annotation.Autowired
+	public PoliticaLgpdService(PoliticaLgpdRepository repository, UsuarioAtualService usuarioAtual) {
+		this.repository = repository; this.usuarioAtual = usuarioAtual;
+	}
+	PoliticaLgpdService(PoliticaLgpdRepository repository) { this(repository, null); }
 
 	@Transactional(readOnly = true)
 	public List<PoliticaLgpdDTO> listar() {
@@ -29,8 +36,17 @@ public class PoliticaLgpdService {
 		politica.setFinalidade(dados.finalidade().trim()); politica.setBaseLegal(dados.baseLegal().trim());
 		politica.setOrigem(dados.origem().trim()); politica.setPerfisAcesso(dados.perfisAcesso().trim());
 		politica.setRetencaoMeses(dados.retencaoMeses()); politica.setDestinoFinal(dados.destinoFinal());
+		var statusAnterior = politica.getStatusAprovacao();
 		politica.setStatusAprovacao(dados.statusAprovacao());
 		politica.setObservacaoAprovacao(limpar(dados.observacaoAprovacao()));
+		if (dados.statusAprovacao() == PoliticaLgpd.StatusAprovacao.APROVADA
+				&& statusAnterior != PoliticaLgpd.StatusAprovacao.APROVADA) {
+			if (politica.getObservacaoAprovacao() == null) throw new IllegalArgumentException("A aprovação exige parecer, responsável e referência");
+			politica.setAprovadaPor(usuarioAtual == null ? "teste" : usuarioAtual.atual().identificador());
+			politica.setAprovadaEm(OffsetDateTime.now());
+		} else if (dados.statusAprovacao() != PoliticaLgpd.StatusAprovacao.APROVADA) {
+			politica.setAprovadaPor(null); politica.setAprovadaEm(null);
+		}
 		return dto(repository.save(politica));
 	}
 
@@ -38,6 +54,6 @@ public class PoliticaLgpdService {
 	private PoliticaLgpdDTO dto(PoliticaLgpd p) {
 		return new PoliticaLgpdDTO(p.getId(), p.getCodigo(), p.getCategoria(), p.getDadosPessoais(),
 				p.getFinalidade(), p.getBaseLegal(), p.getOrigem(), p.getPerfisAcesso(), p.getRetencaoMeses(),
-				p.getDestinoFinal(), p.getStatusAprovacao(), p.getObservacaoAprovacao());
+				p.getDestinoFinal(), p.getStatusAprovacao(), p.getObservacaoAprovacao(),p.getAprovadaPor(),p.getAprovadaEm());
 	}
 }

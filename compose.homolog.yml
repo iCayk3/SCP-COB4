@@ -1,0 +1,90 @@
+name: cob4-homolog
+services:
+  database:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: homolog
+      POSTGRES_HOST: database
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      SGC_JWT_SECRET_FILE: /run/secrets/jwt_secret
+      SGC_USUARIO_INICIAL_SENHA_FILE: /run/secrets/initial_password
+      SGC_LGPD_ANEXOS_CHAVE_FILE: /run/secrets/attachment_key
+      SGC_CORS_ORIGENS: ${SGC_CORS_ORIGENS}
+      RBX_API_URL: ${RBX_API_URL:-}
+      RBX_API_V2_URL: ${RBX_API_V2_URL:-}
+      RBX_API_KEY: ${RBX_API_KEY:-}
+    secrets:
+      - postgres_password
+      - jwt_secret
+      - initial_password
+      - attachment_key
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-8088}:80"
+    networks: [internal]
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  postgres_data:
+  prometheus_data:
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  initial_password:
+    file: ./secrets/initial_password.txt
+  attachment_key:
+    file: ./secrets/attachment_key.txt

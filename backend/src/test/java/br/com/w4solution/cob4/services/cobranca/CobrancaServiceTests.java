@@ -87,8 +87,11 @@ class CobrancaServiceTests {
 		CobrancaService service = new CobrancaService(serviceRbx, clienteRepository, cobrancaRepository,
 				boletoRepository, historicoRepository, logRepository, timelineRepository, tarefaRepository,
 				faixaAtrasoService);
-		SincronizacaoCobrancaDTO resultado = service.sincronizarInadimplentes();
+		var reconciliacao = service.reconciliarInadimplentes();
+		SincronizacaoCobrancaDTO resultado = reconciliacao.sincronizacao();
 
+		assertThat(reconciliacao.totalDivergencias()).isEqualTo(2);
+		assertThat(reconciliacao.ausentesNoSgc()).containsExactlyInAnyOrder("1:DOC-1:1", "1:DOC-2:1");
 		assertThat(resultado.cobrancasCriadas()).isEqualTo(2);
 		assertThat(resultado.boletosCriados()).isEqualTo(2);
 		assertThat(resultado.documentosRecebidos()).isEqualTo(3);

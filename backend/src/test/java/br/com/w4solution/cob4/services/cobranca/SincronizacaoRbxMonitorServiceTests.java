@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 
@@ -27,11 +28,11 @@ class SincronizacaoRbxMonitorServiceTests {
 
 	@BeforeEach
 	void preparar() {
-		monitor = spy(new SincronizacaoRbxMonitorService(cobrancaService, repository, fila));
+		monitor = spy(new SincronizacaoRbxMonitorService(cobrancaService, repository, fila, new ObjectMapper()));
 		ReflectionTestUtils.setField(monitor, "maxTentativas", 3);
 		ReflectionTestUtils.setField(monitor, "backoffInicialMs", 100L);
 		ReflectionTestUtils.setField(monitor, "backoffMaxMs", 1_000L);
-		doNothing().when(monitor).aguardar(anyLong());
+		lenient().doNothing().when(monitor).aguardar(anyLong());
 	}
 
 	@Test
@@ -64,5 +65,17 @@ class SincronizacaoRbxMonitorServiceTests {
 				ArgumentCaptor.forClass(SincronizacaoRbxExecucao.class);
 		verify(repository).save(captor.capture());
 		assertThat(captor.getValue().getStatus()).isEqualTo(SincronizacaoRbxExecucao.Status.FALHA);
+	}
+
+	@Test
+	void replayComMesmaChaveRetornaResultadoPersistidoSemConsultarRbx() throws Exception {
+		var esperado = new SincronizacaoCobrancaDTO(2, 2, 0, 1, 1, 1, BigDecimal.TEN);
+		var execucao = new SincronizacaoRbxExecucao();
+		execucao.setResultadoJson(new ObjectMapper().writeValueAsString(esperado));
+		when(repository.findFirstByChaveIdempotenciaAndStatusOrderByIdDesc(
+				"replay-123", SincronizacaoRbxExecucao.Status.SUCESSO)).thenReturn(java.util.Optional.of(execucao));
+
+		assertThat(monitor.sincronizar("manual", " replay-123 ")).isEqualTo(esperado);
+		verifyNoInteractions(cobrancaService, fila);
 	}
 }

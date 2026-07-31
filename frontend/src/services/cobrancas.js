@@ -10,8 +10,10 @@ export async function buscarCobrancasParaAtendimento({ pagina = 0, tamanho = 30,
   return data;
 }
 
-export async function sincronizarCobrancasRbx() {
-  const { data } = await api.post('/cobrancas/sincronizar-rbx');
+export async function sincronizarCobrancasRbx(chaveIdempotencia = crypto.randomUUID()) {
+  const { data } = await api.post('/cobrancas/sincronizar-rbx', null, {
+    headers: { 'Idempotency-Key': chaveIdempotencia }
+  });
   return data;
 }
 
@@ -30,8 +32,10 @@ export async function reprocessarFalhaSincronizacaoRbx(id) {
   return data;
 }
 
-export async function reconciliarCobrancasRbx() {
-  const { data } = await api.post('/cobrancas/sincronizacoes-rbx/reconciliar');
+export async function reconciliarCobrancasRbx(chaveIdempotencia = crypto.randomUUID()) {
+  const { data } = await api.post('/cobrancas/sincronizacoes-rbx/reconciliar', null, {
+    headers: { 'Idempotency-Key': chaveIdempotencia }
+  });
   return data;
 }
 

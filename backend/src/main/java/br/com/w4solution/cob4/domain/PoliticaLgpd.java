@@ -3,6 +3,7 @@ package br.com.w4solution.cob4.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.OffsetDateTime;
 
 @Getter
 @Setter
@@ -37,4 +38,8 @@ public class PoliticaLgpd {
 	private StatusAprovacao statusAprovacao = StatusAprovacao.PENDENTE_APROVACAO;
 	@Column(name = "observacao_aprovacao", length = 1000)
 	private String observacaoAprovacao;
+	@Column(name = "aprovada_por", length = 150)
+	private String aprovadaPor;
+	@Column(name = "aprovada_em")
+	private OffsetDateTime aprovadaEm;
 }

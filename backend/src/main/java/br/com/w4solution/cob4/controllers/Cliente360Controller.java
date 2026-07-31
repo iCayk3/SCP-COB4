@@ -14,7 +14,7 @@ public class Cliente360Controller {
 	@GetMapping("/processos/{ref}/anexos") @org.springframework.security.access.prepost.PreAuthorize("@carteiraAccess.podeAcessar(#ref)")
 	public Object anexos(@PathVariable String ref){return service.listarAnexos(ref);}
 	@PostMapping(value="/processos/{ref}/anexos",consumes=MediaType.MULTIPART_FORM_DATA_VALUE) @org.springframework.security.access.prepost.PreAuthorize("@carteiraAccess.podeAcessar(#ref)")
-	public Object anexar(@PathVariable String ref,@RequestPart MultipartFile arquivo)throws Exception{return service.anexar(ref,arquivo);}
+	public Object anexar(@PathVariable String ref,@RequestPart MultipartFile arquivo,@RequestParam(defaultValue="OUTRO") br.com.w4solution.cob4.domain.AtendimentoAnexo.Classificacao classificacao)throws Exception{return service.anexar(ref,arquivo,classificacao);}
 	@GetMapping("/processos/{ref}/anexos/{id}") @org.springframework.security.access.prepost.PreAuthorize("@carteiraAccess.podeAcessar(#ref)")
 	public ResponseEntity<byte[]> baixar(@PathVariable String ref,@PathVariable Long id){var a=service.baixar(ref,id);return ResponseEntity.ok().contentType(MediaType.parseMediaType(a.getTipoConteudo())).header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''"+java.net.URLEncoder.encode(a.getNomeOriginal(),java.nio.charset.StandardCharsets.UTF_8)).header("X-Content-Type-Options","nosniff").body(a.getConteudo());}
 	@GetMapping("/processos/{ref}/agenda") @org.springframework.security.access.prepost.PreAuthorize("@carteiraAccess.podeAcessar(#ref)") public Object agenda(@PathVariable String ref){return service.listarAgenda(ref);}

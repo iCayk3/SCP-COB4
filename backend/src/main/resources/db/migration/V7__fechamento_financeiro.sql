@@ -1,0 +1,13 @@
+alter table fechamentos_mensais add column total_pagamentos numeric(19,2) not null default 0;
+alter table fechamentos_mensais add column total_estornos numeric(19,2) not null default 0;
+alter table fechamentos_mensais add column total_descontos numeric(19,2) not null default 0;
+alter table fechamentos_mensais add column total_juros numeric(19,2) not null default 0;
+alter table fechamentos_mensais add column total_multas numeric(19,2) not null default 0;
+alter table fechamentos_mensais add column divergencias_abertas bigint not null default 0;
+alter table fechamentos_mensais add column substitui_id bigint;
+alter table fechamentos_mensais add column aprovado_em timestamp with time zone;
+alter table fechamentos_mensais add column aprovado_por varchar(150);
+alter table fechamentos_mensais add column cancelado_em timestamp with time zone;
+alter table fechamentos_mensais add column cancelado_por varchar(150);
+alter table fechamentos_mensais add column snapshot_json text not null default '{}';
+alter table fechamentos_mensais add constraint fk_fechamento_substitui foreign key(substitui_id) references fechamentos_mensais;

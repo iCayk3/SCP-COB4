@@ -35,6 +35,7 @@ function ConfiguracaoSincronizacaoContent() {
   const [salvando, setSalvando] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
   const [reconciliando, setReconciliando] = useState(false);
+  const [ultimaReconciliacao, setUltimaReconciliacao] = useState(null);
   const [reprocessandoId, setReprocessandoId] = useState(null);
   const [carregandoFalhas, setCarregandoFalhas] = useState(true);
 
@@ -84,8 +85,10 @@ function ConfiguracaoSincronizacaoContent() {
     setReconciliando(true); setErro(''); setSucesso('');
     try {
       const resultado = await reconciliarCobrancasRbx();
-      setSucesso(`Reconciliação concluída: ${resultado.boletosCriados ?? 0} boleto(s) criado(s) e `
-        + `${resultado.boletosAtualizados ?? 0} atualizado(s).`);
+      setUltimaReconciliacao(resultado);
+      setSucesso(`Reconciliação concluída: ${resultado.totalDivergencias ?? 0} divergência(s), `
+        + `${resultado.sincronizacao?.boletosCriados ?? 0} boleto(s) criado(s) e `
+        + `${resultado.sincronizacao?.boletosAtualizados ?? 0} atualizado(s).`);
     } catch (error) {
       setErro(mensagemErro(error, 'Falha ao reconciliar os dados com o RBX.'));
     } finally {
@@ -146,6 +149,34 @@ function ConfiguracaoSincronizacaoContent() {
           {salvando ? 'Salvando...' : 'Salvar horários'}
         </Button>
       </Stack>
+    </Stack></CardContent></Card>}
+
+    {ultimaReconciliacao && <Card><CardContent><Stack spacing={1.5}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1}>
+        <Box>
+          <Typography variant="h6">Resultado da reconciliação</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Fotografia comparada antes da aplicação das correções.
+          </Typography>
+        </Box>
+        <Chip color={ultimaReconciliacao.totalDivergencias ? 'warning' : 'success'}
+          label={`${ultimaReconciliacao.totalDivergencias} divergência(s)`} />
+      </Stack>
+      <Typography variant="body2">
+        RBX: {ultimaReconciliacao.documentosRbx} documento(s) · SGC: {' '}
+        {ultimaReconciliacao.boletosAtivosSgcAntes} boleto(s) ativo(s)
+      </Typography>
+      {!!ultimaReconciliacao.ausentesNoSgc?.length && <Alert severity="warning">
+        Ausentes no SGC: {ultimaReconciliacao.ausentesNoSgc.join(', ')}
+      </Alert>}
+      {!!ultimaReconciliacao.ausentesNoRbx?.length && <Alert severity="info">
+        Ausentes no RBX e desativados localmente: {ultimaReconciliacao.ausentesNoRbx.join(', ')}
+      </Alert>}
+      {!!ultimaReconciliacao.valoresDivergentes?.length && <Alert severity="warning">
+        Valores divergentes corrigidos: {ultimaReconciliacao.valoresDivergentes.join(', ')}
+      </Alert>}
+      {!ultimaReconciliacao.totalDivergencias &&
+        <Alert severity="success">SGC e RBX estavam consistentes.</Alert>}
     </Stack></CardContent></Card>}
 
     <Card><CardContent><Stack spacing={2}>

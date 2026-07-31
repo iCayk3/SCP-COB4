@@ -1,0 +1,9 @@
+package br.com.w4solution.cob4.controllers;
+import br.com.w4solution.cob4.services.financeiro.ExportacaoFinanceiraService;import org.springframework.http.*;import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/planejamento/fechamentos/{id}/exportar") @PreAuthorize("hasAnyAuthority('SCOPE_SUPERVISOR','SCOPE_GERENTE','SCOPE_ADMINISTRADOR')")
+public class ExportacaoFinanceiraController{private final ExportacaoFinanceiraService s;private final br.com.w4solution.cob4.services.usuario.AuditoriaSegurancaService auditoria;private final br.com.w4solution.cob4.security.UsuarioAtualService usuarios;public ExportacaoFinanceiraController(ExportacaoFinanceiraService s,br.com.w4solution.cob4.services.usuario.AuditoriaSegurancaService a,br.com.w4solution.cob4.security.UsuarioAtualService u){this.s=s;auditoria=a;usuarios=u;}
+	@GetMapping("/csv") public ResponseEntity<byte[]> csv(@PathVariable Long id){auditar(id,"CSV");return arquivo(s.csv(id),"text/csv;charset=UTF-8","fechamento.csv");}
+	@GetMapping("/xlsx") public ResponseEntity<byte[]> xlsx(@PathVariable Long id){auditar(id,"XLSX");return arquivo(s.xlsx(id),"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","fechamento.xlsx");}
+	@GetMapping("/pdf") public ResponseEntity<byte[]> pdf(@PathVariable Long id){auditar(id,"PDF");return arquivo(s.pdf(id),"application/pdf","fechamento.pdf");}
+	private void auditar(Long id,String formato){var u=usuarios.atual();auditoria.registrar("FECHAMENTO_EXPORTADO",u.nome(),u.identificador(),"Fechamento "+id+" exportado em "+formato);}
+	private ResponseEntity<byte[]> arquivo(byte[] b,String tipo,String nome){return ResponseEntity.ok().contentType(MediaType.parseMediaType(tipo)).header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+nome+"\"").body(b);}}

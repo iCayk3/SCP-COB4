@@ -3,6 +3,12 @@ import { Link } from 'react-router';
 
 const MODULOS = [
   {
+    titulo: 'Operacao financeira',
+    descricao: 'Negocie contratos, aprove propostas, registre pagamentos, valide comprovantes e concilie o RBX.',
+    caminho: '/dashboard/financeiro-operacional',
+    categoria: 'Financeiro'
+  },
+  {
     titulo: 'Gestao de usuarios',
     descricao: 'Cadastre usuários, defina perfis, bloqueios, presença, capacidade e senhas temporárias.',
     caminho: '/dashboard/configuracoes/usuarios',
@@ -25,6 +31,12 @@ const MODULOS = [
     descricao: 'Defina os intervalos de dias, nomes e prioridades usados para classificar os protocolos.',
     caminho: '/dashboard/configuracoes/faixas-atraso',
     categoria: 'Politica'
+  },
+  {
+    titulo: 'Politica financeira',
+    descricao: 'Versione juros, multa, arredondamento, parcelas, entrada, quebra e alcadas de desconto.',
+    caminho: '/dashboard/configuracoes/politica-financeira',
+    categoria: 'Financeiro'
   },
   {
     titulo: 'Catalogos de motivos',

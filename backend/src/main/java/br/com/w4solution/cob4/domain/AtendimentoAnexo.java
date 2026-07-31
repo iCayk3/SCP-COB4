@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "atendimento_anexos")
 public class AtendimentoAnexo {
+	public enum Classificacao { COMPROVANTE, DOCUMENTO, OUTRO }
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@ManyToOne(optional = false) @JoinColumn(name = "cobranca_id", nullable = false)
@@ -27,4 +28,9 @@ public class AtendimentoAnexo {
 	private String enviadoPor;
 	@Column(name = "enviado_em", nullable = false)
 	private OffsetDateTime enviadoEm;
+	@Enumerated(EnumType.STRING) @Column(nullable = false, length = 30,
+			columnDefinition = "varchar(30) default 'OUTRO'")
+	private Classificacao classificacao = Classificacao.OUTRO;
+	@Column(nullable = false, columnDefinition = "boolean default false")
+	private boolean criptografado;
 }

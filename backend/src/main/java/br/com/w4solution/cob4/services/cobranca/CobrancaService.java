@@ -12,6 +12,7 @@ import br.com.w4solution.cob4.dto.cobranca.CobrancaResumoDTO;
 import br.com.w4solution.cob4.dto.cobranca.ClienteProtocolosDTO;
 import br.com.w4solution.cob4.dto.cobranca.PaginaCobrancaDTO;
 import br.com.w4solution.cob4.dto.cobranca.SincronizacaoCobrancaDTO;
+import br.com.w4solution.cob4.dto.cobranca.ReconciliacaoRbxDTO;
 import br.com.w4solution.cob4.dto.rbx.BoletosAbertos;
 import br.com.w4solution.cob4.repositories.ClienteRepository;
 import br.com.w4solution.cob4.repositories.CobrancaBoletoRepository;
@@ -91,14 +92,44 @@ public class CobrancaService {
 
 	@Transactional
 	public synchronized SincronizacaoCobrancaDTO sincronizarInadimplentes() {
+		return sincronizarDados(serviceRbx.buscarTodosBoletosAbertos(), serviceRbx.buscarTodosClientes());
+	}
+
+	@Transactional
+	public synchronized ReconciliacaoRbxDTO reconciliarInadimplentes() {
+		List<BoletosAbertos> documentos = serviceRbx.buscarTodosBoletosAbertos();
+		List<ClienteRbxDTO> clientes = serviceRbx.buscarTodosClientes();
+		if (documentos == null) throw new IllegalStateException("O RBX nao retornou a lista de documentos abertos");
+		LocalDate hoje = LocalDate.now();
+		Map<String, BigDecimal> rbx = documentos.stream()
+				.filter(d -> parseData(d.vencimento()).filter(v -> v.isBefore(hoje)).isPresent())
+				.filter(d -> StringUtils.hasText(referenciaDocumento(d)))
+				.collect(Collectors.toMap(CobrancaService::referenciaDocumento,
+						d -> BigDecimal.valueOf(d.valor()).setScale(2, RoundingMode.HALF_UP),
+						(atual, repetido) -> atual, LinkedHashMap::new));
+		Map<String, BigDecimal> sgc = boletoRepository.findByAtivoTrue().stream()
+				.collect(Collectors.toMap(CobrancaBoleto::getRbxDocumento, CobrancaBoleto::getValor,
+						(atual, repetido) -> atual, LinkedHashMap::new));
+		List<String> ausentesNoSgc = rbx.keySet().stream().filter(r -> !sgc.containsKey(r)).sorted().toList();
+		List<String> ausentesNoRbx = sgc.keySet().stream().filter(r -> !rbx.containsKey(r)).sorted().toList();
+		List<String> valoresDivergentes = rbx.keySet().stream()
+				.filter(sgc::containsKey).filter(r -> rbx.get(r).compareTo(sgc.get(r)) != 0).sorted().toList();
+		SincronizacaoCobrancaDTO resultado = sincronizarDados(documentos, clientes);
+		int total = ausentesNoSgc.size() + ausentesNoRbx.size() + valoresDivergentes.size();
+		return new ReconciliacaoRbxDTO(rbx.size(), sgc.size(), total, ausentesNoSgc, ausentesNoRbx,
+				valoresDivergentes, resultado);
+	}
+
+	private SincronizacaoCobrancaDTO sincronizarDados(List<BoletosAbertos> documentos,
+			List<ClienteRbxDTO> clientesRbx) {
 		LocalDate hoje = LocalDate.now();
 		OffsetDateTime agora = OffsetDateTime.now();
-		List<BoletosAbertos> documentos = serviceRbx.buscarTodosBoletosAbertos();
 		if (documentos == null) {
 			throw new IllegalStateException("O RBX não retornou a lista de documentos abertos");
 		}
 
-		Map<String, ClienteRbxDTO> clientesPorCodigo = serviceRbx.buscarTodosClientes().stream()
+		if (clientesRbx == null) throw new IllegalStateException("O RBX nao retornou a lista de clientes");
+		Map<String, ClienteRbxDTO> clientesPorCodigo = clientesRbx.stream()
 				.filter(cliente -> StringUtils.hasText(cliente.codigo()))
 				.collect(Collectors.toMap(ClienteRbxDTO::codigo, Function.identity(), (atual, repetido) -> atual));
 

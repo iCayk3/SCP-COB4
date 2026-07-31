@@ -24,9 +24,9 @@ export async function listarAnexos(referencia) {
   const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}/anexos`);
   return data;
 }
-export async function enviarAnexo(referencia, arquivo) {
+export async function enviarAnexo(referencia, arquivo, classificacao = 'OUTRO') {
   const form = new FormData(); form.append('arquivo', arquivo);
-  const { data } = await api.post(`/processos/${encodeURIComponent(referencia)}/anexos`, form);
+  const { data } = await api.post(`/processos/${encodeURIComponent(referencia)}/anexos`, form, { params: { classificacao } });
   return data;
 }
 export async function baixarAnexo(referencia, anexo) {

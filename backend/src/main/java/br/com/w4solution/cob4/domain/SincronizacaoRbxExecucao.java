@@ -15,6 +15,8 @@ public class SincronizacaoRbxExecucao {
 
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	@Column(name = "chave_idempotencia", length = 120)
+	private String chaveIdempotencia;
 	@Column(nullable = false, length = 80)
 	private String origem;
 	@Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
@@ -35,4 +37,6 @@ public class SincronizacaoRbxExecucao {
 	private Integer boletosCriados;
 	@Column(length = 2000)
 	private String mensagem;
+	@Column(name = "resultado_json", columnDefinition = "text")
+	private String resultadoJson;
 }

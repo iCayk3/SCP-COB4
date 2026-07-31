@@ -32,6 +32,8 @@ const Backlog = lazy(() => import('@/pages/backlog'));
 const Lgpd = lazy(() => import('@/pages/lgpd'));
 const ConfiguracaoSincronizacao = lazy(() => import('@/pages/configuracao-sincronizacao'));
 const Usuarios = lazy(() => import('@/pages/usuarios'));
+const PoliticaFinanceira = lazy(() => import('@/pages/politica-financeira'));
+const FinanceiroOperacional = lazy(() => import('@/pages/financeiro-operacional'));
 
 // USER LIST PAGES
 const AddNewUser = lazy(() => import('@/pages/users/add-new-user'));
@@ -111,6 +113,9 @@ export const DashboardRoutes = [{
     index: true,
     element: <Analytics />
   }, {
+    path: 'financeiro-operacional',
+    element: <FinanceiroOperacional />
+  }, {
     path: 'cobrancas',
     element: <Cobrancas />
   }, {
@@ -157,6 +162,9 @@ export const DashboardRoutes = [{
     }, {
       path: 'usuarios',
       element: <Usuarios />
+    }, {
+      path: 'politica-financeira',
+      element: <PoliticaFinanceira />
     }]
   }, {
     path: 'planejamento',

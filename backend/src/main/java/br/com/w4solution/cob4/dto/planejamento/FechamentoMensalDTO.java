@@ -14,5 +14,8 @@ public record FechamentoMensalDTO(
 		long atendimentosRegistrados,
 		OffsetDateTime geradoEm,
 		String geradoPor,
-		String observacao
+		String observacao,
+		java.math.BigDecimal totalPagamentos, java.math.BigDecimal totalEstornos,
+		java.math.BigDecimal totalDescontos, java.math.BigDecimal totalJuros, java.math.BigDecimal totalMultas,
+		long divergenciasAbertas, Long substituiId, java.time.OffsetDateTime aprovadoEm, String aprovadoPor
 ) {}

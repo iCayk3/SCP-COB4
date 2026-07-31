@@ -20,6 +20,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import br.com.w4solution.cob4.security.EstadoUsuarioFilter;
+import br.com.w4solution.cob4.security.AuditoriaLeituraFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -32,13 +34,14 @@ import java.util.List;
 public class SecurityConfig {
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, EstadoUsuarioFilter estadoUsuarioFilter,
-			BearerTokenResolver bearerTokenResolver) throws Exception {
+			BearerTokenResolver bearerTokenResolver, AuditoriaLeituraFilter auditoriaLeituraFilter) throws Exception {
 		return http
 				.csrf(csrf -> csrf.disable())
 				.cors(cors -> {})
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/auth/login", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+						.requestMatchers("/api/auth/login", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
+								"/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
 						.anyRequest().authenticated())
 				.oauth2ResourceServer(oauth -> oauth
 						.bearerTokenResolver(bearerTokenResolver)
@@ -69,8 +72,10 @@ public class SecurityConfig {
 								"default-src 'self'; frame-ancestors 'none'; object-src 'none'"))
 						.frameOptions(frame -> frame.deny()))
 				.addFilterAfter(estadoUsuarioFilter, BearerTokenAuthenticationFilter.class)
+				.addFilterAfter(auditoriaLeituraFilter, EstadoUsuarioFilter.class)
 				.build();
 	}
+	@Bean FilterRegistrationBean<AuditoriaLeituraFilter> desabilitarRegistroAutomatico(AuditoriaLeituraFilter f){var r=new FilterRegistrationBean<>(f);r.setEnabled(false);return r;}
 
 	@Bean
 	PasswordEncoder passwordEncoder() {

@@ -54,22 +54,22 @@ public class PlanejamentoController {
 	}
 
 	@PostMapping("/fechamentos")
-	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE','SCOPE_SUPERVISOR')")
 	public FechamentoMensalDTO gerarFechamento(@RequestParam YearMonth competencia,
 											   @RequestParam(required = false) String observacao) {
 		return fechamentoService.gerar(competencia, usuarioAtualService.atual().identificador(), observacao);
 	}
 
 	@PostMapping("/fechamentos/{id}/aprovar")
-	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE','SCOPE_SUPERVISOR')")
 	public FechamentoMensalDTO aprovarFechamento(@PathVariable Long id) {
-		return fechamentoService.aprovar(id);
+		return fechamentoService.aprovar(id, usuarioAtualService.atual().identificador());
 	}
 
 	@PostMapping("/fechamentos/{id}/cancelar")
-	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE','SCOPE_SUPERVISOR')")
 	public FechamentoMensalDTO cancelarFechamento(@PathVariable Long id,
 												  @RequestParam(required = false) String motivo) {
-		return fechamentoService.cancelar(id, motivo);
+		return fechamentoService.cancelar(id, motivo, usuarioAtualService.atual().identificador());
 	}
 }

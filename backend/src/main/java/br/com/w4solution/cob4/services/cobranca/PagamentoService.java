@@ -44,13 +44,16 @@ public class PagamentoService {
 			historico.setDataPagamento(dados.dataPagamento());
 			historico.setSituacao("PAGO");
 			historicoRepository.save(historico);
-		} else {
+		} else if (pago.compareTo(cobranca.getValorTotal()) >= 0) {
 			for (HistoricoAtraso historico : historicoRepository.findByContratoReferenciaAndCpfAndDataPagamentoIsNull(
 					cobranca.getContratoReferencia(), cobranca.getCpfAgregador())) {
 				historico.setDataPagamento(dados.dataPagamento());
 				historico.setSituacao("PAGO");
 				historicoRepository.save(historico);
 			}
+		} else {
+			// Pagamento parcial sem identificacao do titulo reduz o saldo do protocolo,
+			// mas nao pode marcar indiscriminadamente todos os boletos como quitados.
 		}
 		BigDecimal saldo = cobranca.getValorTotal().subtract(pago).max(BigDecimal.ZERO);
 		cobranca.setValorTotal(saldo);
@@ -77,7 +80,7 @@ public class PagamentoService {
 		timeline(cobranca, "PAGAMENTO_CONFIRMADO",
 				"Pagamento confirmado no valor de " + pago + ". Saldo atual: " + saldo
 						+ (dados.comprovanteReferencia() == null || dados.comprovanteReferencia().isBlank()
-						? "" : ". Comprovante: " + dados.comprovanteReferencia().trim()),
+						? "" : ". Comprovante protegido informado."),
 				usuario.nome(), usuario.identificador(), agora);
 	}
 

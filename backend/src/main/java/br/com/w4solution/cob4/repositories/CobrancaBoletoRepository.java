@@ -15,6 +15,7 @@ import java.util.List;
 public interface CobrancaBoletoRepository extends JpaRepository<CobrancaBoleto, Long> {
 	Optional<CobrancaBoleto> findByRbxDocumento(String rbxDocumento);
 	List<CobrancaBoleto> findAllByRbxDocumentoIn(Collection<String> referencias);
+	List<CobrancaBoleto> findByAtivoTrue();
 	long countByCobrancaAndAtivoTrue(Cobranca cobranca);
 
 	@Query("select coalesce(sum(b.valor), 0) from CobrancaBoleto b where b.cobranca = :cobranca and b.ativo = true")

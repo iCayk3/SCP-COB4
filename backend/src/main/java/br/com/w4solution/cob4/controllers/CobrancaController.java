@@ -50,8 +50,9 @@ public class CobrancaController {
 	@PostMapping("/sincronizar-rbx")
 	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
 	@Operation(summary = "Importar boletos vencidos e agregar cobrancas abertas por contrato")
-	public SincronizacaoCobrancaDTO sincronizarRbx() {
-		return sincronizacaoMonitorService.sincronizar("manual");
+	public SincronizacaoCobrancaDTO sincronizarRbx(
+			@RequestHeader(name = "Idempotency-Key", required = false) String chaveIdempotencia) {
+		return sincronizacaoMonitorService.sincronizar("manual", chaveIdempotencia);
 	}
 
 	@GetMapping("/sincronizacoes-rbx")
@@ -75,8 +76,9 @@ public class CobrancaController {
 	@PostMapping("/sincronizacoes-rbx/reconciliar")
 	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
 	@Operation(summary = "Reconciliar o estado local com a fotografia atual do RBX")
-	public SincronizacaoCobrancaDTO reconciliarRbx() {
-		return sincronizacaoMonitorService.reconciliar();
+	public ReconciliacaoRbxDTO reconciliarRbx(
+			@RequestHeader(name = "Idempotency-Key", required = false) String chaveIdempotencia) {
+		return sincronizacaoMonitorService.reconciliar(chaveIdempotencia);
 	}
 
 	@GetMapping("/abertas")

@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 
 public record SincronizacaoRbxExecucaoDTO(
 		Long id,
+		String chaveIdempotencia,
 		String origem,
 		String status,
 		OffsetDateTime iniciadaEm,

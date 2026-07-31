@@ -32,6 +32,7 @@ export default function Conversation({ handleOpen, processo }) {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState(false);
+	const [classificacaoAnexo, setClassificacaoAnexo] = useState('OUTRO');
   const [form, setForm] = useState({ resultado: '', observacao: '', proximaAcao: '' });
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function Conversation({ handleOpen, processo }) {
     if (!arquivo) return;
     setSalvando(true); setErro('');
     try {
-      await enviarAnexo(processo.referencia, arquivo);
+      await enviarAnexo(processo.referencia, arquivo, classificacaoAnexo);
       setSucesso(true);
     } catch (error) {
       setErro(error.response?.data?.erro || error.response?.data?.message || 'Não foi possível anexar o arquivo.');
@@ -157,6 +158,7 @@ export default function Conversation({ handleOpen, processo }) {
     {erro && <Alert severity="error" onClose={() => setErro('')}>{erro}</Alert>}
     <Box px={3} py={2} sx={{ flexShrink: 0 }}>
       <FlexBetween gap={2}>
+		<TextField select size="small" label="Tipo do anexo" value={classificacaoAnexo} sx={{ minWidth: 170 }} onChange={e => setClassificacaoAnexo(e.target.value)}><MenuItem value="OUTRO">Outro</MenuItem><MenuItem value="DOCUMENTO">Documento</MenuItem><MenuItem value="COMPROVANTE">Comprovante protegido</MenuItem></TextField>
         <Button component="label" size="small" startIcon={<AttachFileRounded />} disabled={salvando}>
           Anexar
           <input hidden type="file" accept=".pdf,.png,.jpg,.jpeg,.txt" onChange={anexar} />
