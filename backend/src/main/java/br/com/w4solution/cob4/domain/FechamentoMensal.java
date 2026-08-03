@@ -54,6 +54,6 @@ public class FechamentoMensal {
 	@Column(name = "aprovado_por", length = 150) private String aprovadoPor;
 	@Column(name = "cancelado_em") private OffsetDateTime canceladoEm;
 	@Column(name = "cancelado_por", length = 150) private String canceladoPor;
-	@Lob @Column(name = "snapshot_json", nullable = false)
+	@Column(name = "snapshot_json", nullable = false, columnDefinition = "text")
 	private String snapshotJson = "{}";
 }

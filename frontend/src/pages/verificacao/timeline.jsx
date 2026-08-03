@@ -18,7 +18,7 @@ export default function TimelinePage() {
   useEffect(() => {
     if (!referencia) return;
     setCarregando(true);
-    listarTimeline(referencia).then(setEventos).catch(() => setErro('Não foi possível carregar a timeline.'))
+    listarTimeline(referencia).then(pagina => setEventos(pagina.itens)).catch(() => setErro('Não foi possível carregar a timeline.'))
       .finally(() => setCarregando(false));
   }, [referencia]);
 

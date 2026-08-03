@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
+import java.time.OffsetDateTime;
+import jakarta.validation.constraints.PositiveOrZero;
 
 public record RegistrarAtendimentoDTO(
 		@NotNull Atendimento.Canal canal,
@@ -16,7 +18,9 @@ public record RegistrarAtendimentoDTO(
 		@NotBlank String proximaAcao,
 		@NotBlank String operadorNome,
 		@NotBlank String operadorIdentificador,
-		@NotEmpty List<@Valid MensagemDTO> mensagens
+		@NotEmpty List<@Valid MensagemDTO> mensagens,
+		@PositiveOrZero Integer duracaoSegundos, OffsetDateTime retornoAgendadoEm,
+		Long promessaId, Long acordoId, Long agendamentoId
 ) {
 	public record MensagemDTO(
 			@NotNull AtendimentoMensagem.Autor autor,

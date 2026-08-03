@@ -35,11 +35,11 @@ public class MetricasService {
 	public MetricasMensaisDTO consultar(YearMonth competencia) {
 		OffsetDateTime inicio = competencia.atDay(1).atStartOfDay(ZONA).toOffsetDateTime();
 		OffsetDateTime fim = competencia.plusMonths(1).atDay(1).atStartOfDay(ZONA).toOffsetDateTime();
-		var cobrancas = cobrancaRepository.findAll();
-		var atendimentos = atendimentoRepository.findAll();
-		var criadas = cobrancas.stream().filter(c -> dentro(c.getCriadaEm(), inicio, fim)).toList();
-		var atendimentosMes = atendimentos.stream().filter(a -> dentro(a.getRealizadoEm(), inicio, fim)).toList();
-		Map<Long, Optional<Atendimento>> primeiro = atendimentos.stream()
+		var criadas = cobrancaRepository.findByCriadaEmBetween(inicio, fim);
+		var atendimentosMes = atendimentoRepository.findByRealizadoEmBetween(inicio, fim);
+		var atendimentosProcessosCriados = criadas.stream().flatMap(c -> atendimentoRepository
+				.findByCobrancaReferenciaOrderByRealizadoEmDesc(c.getReferencia()).stream()).toList();
+		Map<Long, Optional<Atendimento>> primeiro = atendimentosProcessosCriados.stream()
 				.collect(Collectors.groupingBy(a -> a.getCobranca().getId(),
 						Collectors.minBy(Comparator.comparing(Atendimento::getRealizadoEm))));
 		long noSla = criadas.stream().filter(c -> primeiro.getOrDefault(c.getId(), Optional.empty())
@@ -47,18 +47,19 @@ public class MetricasService {
 		long contatos = atendimentosMes.stream().filter(a -> a.getResultado() != Atendimento.Resultado.SEM_CONTATO).count();
 		long negociacoes = atendimentosMes.stream().filter(a -> EnumSet.of(Atendimento.Resultado.NEGOCIACAO,
 				Atendimento.Resultado.PROMESSA, Atendimento.Resultado.PAGAMENTO).contains(a.getResultado())).count();
-		var encerradas = cobrancas.stream().filter(c -> dentro(c.getEncerradaEm(), inicio, fim)).toList();
+		var encerradas = cobrancaRepository.findByEncerradaEmBetween(inicio, fim);
 		double mediaHoras = encerradas.stream().mapToLong(c -> Duration.between(c.getCriadaEm(), c.getEncerradaEm()).toHours())
 				.average().orElse(0);
 		OffsetDateTime referencia = fim.isBefore(OffsetDateTime.now()) ? fim : OffsetDateTime.now();
-		long ativas = cobrancas.stream().filter(c -> !c.encerrada() && c.getCriadaEm().isBefore(fim)).count();
-		long semMovimento = cobrancas.stream().filter(c -> !c.encerrada() && c.getCriadaEm().isBefore(fim)
-				&& c.getUltimaMovimentacaoEm().plusHours(c.getSlaHoras()).isBefore(referencia)).count();
+		var cobrancasAtivas = cobrancaRepository.findByCriadaEmBeforeAndStatusIn(fim,
+				List.of(Cobranca.Status.ABERTA,Cobranca.Status.EM_ANDAMENTO));
+		long ativas = cobrancasAtivas.size();
+		long semMovimento = cobrancasAtivas.stream().filter(c ->
+				c.getUltimaMovimentacaoEm().plusHours(c.getSlaHoras()).isBefore(referencia)).count();
 		long consistentes = criadas.stream().filter(c -> texto(c.getCpfAgregador()) && texto(c.getContratoReferencia())
 				&& c.getValorTotal() != null && c.getValorTotal().signum() >= 0).count();
-		BigDecimal recuperado = historicoRepository.findAll().stream()
-				.filter(h -> h.getDataPagamento() != null && !h.getDataPagamento().isBefore(competencia.atDay(1))
-						&& h.getDataPagamento().isBefore(competencia.plusMonths(1).atDay(1)))
+		BigDecimal recuperado = historicoRepository.findByDataPagamentoBetween(competencia.atDay(1),
+				competencia.plusMonths(1).atDay(1).minusDays(1)).stream()
 				.map(h -> h.getValor()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
 		var indicadores = new ArrayList<MetricasMensaisDTO.IndicadorDTO>();

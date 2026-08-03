@@ -14,4 +14,5 @@ public interface PromessaPagamentoRepository extends JpaRepository<PromessaPagam
 	List<PromessaPagamento> findByStatusAndVencimentoBefore(PromessaPagamento.Status status, LocalDate data);
 	List<PromessaPagamento> findByCobrancaInAndStatus(Collection<Cobranca> cobrancas, PromessaPagamento.Status status);
 	long countByCriadaEmBetween(OffsetDateTime inicio, OffsetDateTime fim);
+	long countByCobrancaResponsavelIdentificadorAndStatusAndVencimento(String responsavel,PromessaPagamento.Status status,LocalDate vencimento);
 }

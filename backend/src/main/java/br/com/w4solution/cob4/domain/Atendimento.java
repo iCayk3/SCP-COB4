@@ -12,7 +12,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "atendimentos")
 public class Atendimento {
-	public enum Canal { CHAT }
+	public enum Canal { CHAT, WHATSAPP, TELEFONE, SMS, EMAIL, PRESENCIAL }
 	public enum Resultado { SEM_CONTATO, ATENDEU, NEGOCIACAO, PROMESSA, PAGAMENTO, VISITA, SUPERVISOR, ENCERRAMENTO }
 
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +33,11 @@ public class Atendimento {
 	private String operadorIdentificador;
 	@Column(name = "realizado_em", nullable = false)
 	private OffsetDateTime realizadoEm;
+	@Column(name = "duracao_segundos") private Integer duracaoSegundos;
+	@Column(name = "retorno_agendado_em") private OffsetDateTime retornoAgendadoEm;
+	@Column(name = "promessa_id") private Long promessaId;
+	@Column(name = "acordo_id") private Long acordoId;
+	@Column(name = "agendamento_id") private Long agendamentoId;
 
 	@PrePersist
 	void validar() {

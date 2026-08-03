@@ -13,7 +13,8 @@ public record FluxoDTO(
 		boolean ativo,
 		boolean padrao,
 		@NotEmpty List<@Valid EstadoDTO> estados,
-		@NotEmpty List<@Valid TransicaoDTO> transicoes
+		@NotEmpty List<@Valid TransicaoDTO> transicoes,
+		Integer versao, String statusVersao, String codigoOrigem, Long rowVersion
 ) {
 	public record EstadoDTO(@NotBlank String codigo, @NotBlank String nome, int ordem,
 							boolean inicial, boolean terminal) {}

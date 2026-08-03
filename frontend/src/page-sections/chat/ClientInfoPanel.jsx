@@ -56,7 +56,7 @@ export default function ClientInfoPanel({ processo, onAtualizar }) {
       const detalhes = await Promise.all(consolidado.protocolos.map(async protocolo => [
         protocolo.referencia, await consultarEstadoProcesso(protocolo.referencia)
       ]));
-      const eventos = await listarTimeline(processo.referencia);
+      const eventos = (await listarTimeline(processo.referencia)).itens;
       setVisao(consolidado);
       setEstados(Object.fromEntries(detalhes));
       setTimeline(eventos);

@@ -111,7 +111,7 @@ public class SimulacaoAtendimentoService {
 			}
 		}
 		return new RegistrarAtendimentoDTO(Atendimento.Canal.CHAT, resultado, observacao, proximaAcao,
-				"IA SGC (simulação)", OPERADOR_ID, mensagens);
+				"IA SGC (simulação)", OPERADOR_ID, mensagens, null, null, null, null, null);
 	}
 
 	private RegistrarAtendimentoDTO.MensagemDTO msg(AtendimentoMensagem.Autor autor, String texto) {

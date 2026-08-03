@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import br.com.w4solution.cob4.security.EstadoUsuarioFilter;
 import br.com.w4solution.cob4.security.AuditoriaLeituraFilter;
+import br.com.w4solution.cob4.security.ProtecaoApiFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import javax.crypto.SecretKey;
@@ -34,14 +35,15 @@ import java.util.List;
 public class SecurityConfig {
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, EstadoUsuarioFilter estadoUsuarioFilter,
-			BearerTokenResolver bearerTokenResolver, AuditoriaLeituraFilter auditoriaLeituraFilter) throws Exception {
+			BearerTokenResolver bearerTokenResolver, AuditoriaLeituraFilter auditoriaLeituraFilter, ProtecaoApiFilter protecaoApiFilter) throws Exception {
 		return http
 				.csrf(csrf -> csrf.disable())
 				.cors(cors -> {})
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/api/auth/login", "/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-								"/actuator/health", "/actuator/health/**", "/actuator/prometheus").permitAll()
+								"/actuator/health", "/actuator/health/**").permitAll()
+						.requestMatchers("/actuator/prometheus").hasAnyAuthority("SCOPE_ADMINISTRADOR","SCOPE_GERENTE")
 						.anyRequest().authenticated())
 				.oauth2ResourceServer(oauth -> oauth
 						.bearerTokenResolver(bearerTokenResolver)
@@ -72,6 +74,7 @@ public class SecurityConfig {
 								"default-src 'self'; frame-ancestors 'none'; object-src 'none'"))
 						.frameOptions(frame -> frame.deny()))
 				.addFilterAfter(estadoUsuarioFilter, BearerTokenAuthenticationFilter.class)
+				.addFilterBefore(protecaoApiFilter, BearerTokenAuthenticationFilter.class)
 				.addFilterAfter(auditoriaLeituraFilter, EstadoUsuarioFilter.class)
 				.build();
 	}
@@ -111,8 +114,8 @@ public class SecurityConfig {
 		CorsConfiguration config = new CorsConfiguration();
 		config.setAllowedOrigins(Arrays.stream(origens.split(",")).map(String::trim).filter(s -> !s.isBlank()).toList());
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-		config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-		config.setExposedHeaders(List.of("WWW-Authenticate"));
+		config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Idempotency-Key", "X-CSRF-TOKEN"));
+		config.setExposedHeaders(List.of("WWW-Authenticate", "X-Trace-Id", "Retry-After"));
 		config.setAllowCredentials(true);
 		config.setMaxAge(3600L);
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

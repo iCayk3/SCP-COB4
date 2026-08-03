@@ -6,7 +6,8 @@ import java.util.List;
 public record AtendimentoResumoDTO(
 		Long id, String canal, String resultado, String observacao, String proximaAcao,
 		String operadorNome, String operadorIdentificador, OffsetDateTime realizadoEm,
-		List<MensagemResumoDTO> mensagens
+		List<MensagemResumoDTO> mensagens, Integer duracaoSegundos, OffsetDateTime retornoAgendadoEm,
+		Long promessaId, Long acordoId, Long agendamentoId
 ) {
 	public record MensagemResumoDTO(Long id, String autor, String mensagem, OffsetDateTime enviadaEm) {}
 }

@@ -103,8 +103,28 @@ public class CobrancaController {
 	}
 
 	@GetMapping("/fila/{responsavelIdentificador}")
+	@PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE','SCOPE_SUPERVISOR')")
 	public List<CobrancaResumoDTO> minhaFila(@PathVariable String responsavelIdentificador) {
 		return filaService.minhaFila(responsavelIdentificador);
+	}
+
+	@GetMapping("/minha-fila")
+	public List<CobrancaResumoDTO> minhaFilaAtual() {
+		return filaService.minhaFila(usuarioAtualService.atual().identificador());
+	}
+
+	@GetMapping("/minha-fila/pagina")
+	public br.com.w4solution.cob4.dto.api.PaginaDTO<CobrancaResumoDTO> minhaFilaPaginada(
+			@RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "30") int tamanho,
+			@RequestParam(defaultValue = "") String busca,
+			@RequestParam(required = false) br.com.w4solution.cob4.domain.Cobranca.Prioridade prioridade,
+			@RequestParam(required = false) String estado,
+			@RequestParam(required = false) br.com.w4solution.cob4.domain.Cobranca.FaixaAtraso faixa,
+			@RequestParam(required = false) Integer diasMin, @RequestParam(required = false) Integer diasMax,
+			@RequestParam(defaultValue = "prioridade") String ordenarPor,
+			@RequestParam(defaultValue = "desc") String direcao) {
+		return filaService.minhaFilaPaginada(pagina, tamanho, busca, prioridade, estado, faixa,
+				diasMin, diasMax, ordenarPor, direcao);
 	}
 
 	@PostMapping("/fila/distribuir")
@@ -123,6 +143,12 @@ public class CobrancaController {
 	@GetMapping("/tarefas")
 	public List<TarefaCobrancaDTO> tarefas(@RequestParam(required = false) String responsavelIdentificador) {
 		return filaService.tarefas(responsavelIdentificador);
+	}
+
+	@GetMapping("/minhas-tarefas/pagina")
+	public br.com.w4solution.cob4.dto.api.PaginaDTO<TarefaCobrancaDTO> minhasTarefasPaginadas(
+			@RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "30") int tamanho) {
+		return filaService.minhasTarefasPaginadas(pagina, tamanho);
 	}
 
 	@PutMapping("/tarefas/{id}")

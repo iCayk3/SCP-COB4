@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "fluxos_cobranca")
 public class FluxoCobranca {
+	public enum StatusVersao { RASCUNHO, PUBLICADO, DESATIVADO }
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@Column(nullable = false, unique = true, length = 60)
@@ -22,6 +23,11 @@ public class FluxoCobranca {
 	private boolean ativo = true;
 	@Column(nullable = false)
 	private boolean padrao;
+	@Column(nullable=false) private int versao = 1;
+	@Enumerated(EnumType.STRING) @Column(name="status_versao",nullable=false,length=20) private StatusVersao statusVersao = StatusVersao.RASCUNHO;
+	@Column(name="codigo_origem",nullable=false,length=60) private String codigoOrigem;
+	@Column(name="publicado_em") private OffsetDateTime publicadoEm;
+	@Version @Column(name="row_version",nullable=false) private long rowVersion;
 	@Column(name = "criado_em", nullable = false)
 	private OffsetDateTime criadoEm;
 	@Column(name = "atualizado_em", nullable = false)
@@ -29,6 +35,7 @@ public class FluxoCobranca {
 
 	@PrePersist @PreUpdate
 	void validar() {
+		if (!StringUtils.hasText(codigoOrigem)) codigoOrigem = codigo;
 		if (!StringUtils.hasText(codigo) || !StringUtils.hasText(nome)) {
 			throw new IllegalStateException("Fluxo deve possuir código e nome");
 		}

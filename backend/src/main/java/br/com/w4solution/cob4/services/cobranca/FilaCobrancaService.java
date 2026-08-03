@@ -12,6 +12,9 @@ import br.com.w4solution.cob4.repositories.UsuarioRepository;
 import br.com.w4solution.cob4.security.AcaoSistema;
 import br.com.w4solution.cob4.security.AutorizacaoService;
 import br.com.w4solution.cob4.security.PerfilUsuario;
+import br.com.w4solution.cob4.dto.api.PaginaDTO;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -142,6 +145,33 @@ public class FilaCobrancaService {
 				"Redistribuido de " + anterior + " para " + operador.getNome() + ". Motivo: " + dados.motivo().trim(),
 				supervisor.nome(), supervisor.identificador(), OffsetDateTime.now());
 		return new ResultadoDistribuicaoDTO.ItemDTO(referencia, operador.getNome(), operador.getIdentificador());
+	}
+
+	@Transactional(readOnly = true)
+	public PaginaDTO<CobrancaResumoDTO> minhaFilaPaginada(int pagina, int tamanho, String busca,
+			Cobranca.Prioridade prioridade, String estado, Cobranca.FaixaAtraso faixa,
+			Integer diasMin, Integer diasMax, String ordenarPor, String direcao) {
+		if (pagina < 0) throw new IllegalArgumentException("Pagina deve ser maior ou igual a zero");
+		if (tamanho < 1 || tamanho > 100) throw new IllegalArgumentException("Tamanho deve estar entre 1 e 100");
+		if (diasMin != null && diasMax != null && diasMin > diasMax) throw new IllegalArgumentException("Faixa de dias invalida");
+		Map<String, String> campos = Map.of("prioridade", "prioridade", "atualizacao", "atualizadaEm",
+				"valor", "valorTotal", "atraso", "diasAtraso", "sla", "estadoFluxoDesde");
+		String campo = campos.getOrDefault(ordenarPor == null ? "prioridade" : ordenarPor, "prioridade");
+		Sort.Direction sentido = "asc".equalsIgnoreCase(direcao) ? Sort.Direction.ASC : Sort.Direction.DESC;
+		var pageable = PageRequest.of(pagina, tamanho, Sort.by(sentido, campo).and(Sort.by(Sort.Direction.ASC, "atualizadaEm")));
+		var usuario = autorizacaoService.atual();
+		return PaginaDTO.de(cobrancaRepository.buscarFila(ATIVOS, usuario.identificador(), prioridade,
+				estado == null || estado.isBlank() ? null : estado.trim(), faixa, diasMin, diasMax,
+				busca == null ? "" : busca.trim(), pageable), this::resumo);
+	}
+
+	@Transactional(readOnly = true)
+	public PaginaDTO<TarefaCobrancaDTO> minhasTarefasPaginadas(int pagina, int tamanho) {
+		if (pagina < 0 || tamanho < 1 || tamanho > 100) throw new IllegalArgumentException("Paginacao invalida");
+		var usuario = autorizacaoService.atual();
+		var pageable = PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.ASC, "prazoEm"));
+		return PaginaDTO.de(tarefaRepository.findByResponsavelIdentificadorAndStatusIn(usuario.identificador(),
+				List.of(TarefaCobranca.Status.PENDENTE, TarefaCobranca.Status.EM_ANDAMENTO), pageable), this::dto);
 	}
 
 	private Usuario escolherOperador(List<Usuario> operadores, Map<String, Long> carga, Cobranca processo) {

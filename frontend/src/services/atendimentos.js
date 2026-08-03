@@ -5,13 +5,13 @@ export async function registrarAtendimento(referencia, dados) {
   return data;
 }
 
-export async function listarAtendimentos(referencia) {
-  const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}/atendimentos`);
+export async function listarAtendimentos(referencia, params = {}) {
+  const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}/atendimentos/pagina`, { params });
   return data;
 }
 
-export async function listarTimeline(referencia) {
-  const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}/timeline`);
+export async function listarTimeline(referencia, params = {}) {
+  const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}/timeline/pagina`, { params });
   return data;
 }
 
@@ -34,8 +34,8 @@ export async function baixarAnexo(referencia, anexo) {
   const url = URL.createObjectURL(data); const link = document.createElement('a');
   link.href = url; link.download = anexo.nome; link.click(); URL.revokeObjectURL(url);
 }
-export async function listarAgenda(referencia) {
-  const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}/agenda`); return data;
+export async function listarAgenda(referencia, params = {}) {
+  const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}/agenda/pagina`, { params }); return data;
 }
 export async function criarAgendamento(referencia, payload) {
   const { data } = await api.post(`/processos/${encodeURIComponent(referencia)}/agenda`, payload); return data;

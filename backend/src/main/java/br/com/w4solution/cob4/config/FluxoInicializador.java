@@ -45,7 +45,7 @@ public class FluxoInicializador implements ApplicationRunner {
 				t("VISITA", "RETIRADA", "Encaminhar para retirada", false, null),
 				t("RETIRADA", "JURIDICO", "Encaminhar ao jurídico", false, null),
 				t("JURIDICO", "ENCERRADO", "Encerrar processo jurídico", false, null));
-		service.salvar(null, new FluxoDTO(null, "COBRANCA_PADRAO", "Cobrança padrão", true, true, estados, transicoes));
+		service.salvar(null, new FluxoDTO(null, "COBRANCA_PADRAO", "Cobrança padrão", true, true, estados, transicoes, 1, "RASCUNHO", "COBRANCA_PADRAO", null));
 	}
 
 	private FluxoDTO.EstadoDTO e(String codigo, String nome, int ordem, boolean inicial, boolean terminal) {

@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import br.com.w4solution.cob4.dto.api.PaginaDTO;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import br.com.w4solution.cob4.services.fluxo.EstadoProcessoService;
 import br.com.w4solution.cob4.dto.fluxo.AlterarEstadoDTO;
 import br.com.w4solution.cob4.security.UsuarioAtualService;
@@ -56,6 +59,8 @@ public class AtendimentoService {
 		atendimento.setOperadorNome(usuario.nome());
 		atendimento.setOperadorIdentificador(usuario.identificador());
 		atendimento.setRealizadoEm(agora);
+		atendimento.setDuracaoSegundos(dados.duracaoSegundos()); atendimento.setRetornoAgendadoEm(dados.retornoAgendadoEm());
+		atendimento.setPromessaId(dados.promessaId()); atendimento.setAcordoId(dados.acordoId()); atendimento.setAgendamentoId(dados.agendamentoId());
 		atendimentoRepository.save(atendimento);
 
 		List<AtendimentoMensagem> mensagens = dados.mensagens().stream().map(item -> {
@@ -96,7 +101,7 @@ public class AtendimentoService {
 		ProcessoTimeline timeline = new ProcessoTimeline();
 		timeline.setCobranca(processo);
 		timeline.setEvento("ATENDIMENTO_REGISTRADO");
-		timeline.setDescricao("Atendimento via chat: " + dados.resultado() + ". " + dados.observacao().trim());
+		timeline.setDescricao("Atendimento via " + dados.canal().name().toLowerCase() + ": " + dados.resultado() + ". " + dados.observacao().trim());
 		timeline.setAutorNome(usuario.nome());
 		timeline.setAutorIdentificador(usuario.identificador());
 		timeline.setCriadoEm(agora);
@@ -110,7 +115,7 @@ public class AtendimentoService {
 		tarefa.setResponsavelNome(processo.getResponsavelNome());
 		tarefa.setResponsavelIdentificador(processo.getResponsavelIdentificador());
 		tarefa.setCriadaEm(agora);
-		tarefa.setPrazoEm(agora.plusHours(processo.getSlaHoras()));
+		tarefa.setPrazoEm(dados.retornoAgendadoEm() == null ? agora.plusHours(processo.getSlaHoras()) : dados.retornoAgendadoEm());
 		tarefaRepository.save(tarefa);
 		return resumo(atendimento);
 	}
@@ -121,6 +126,15 @@ public class AtendimentoService {
 				.stream().map(this::resumo).toList();
 	}
 
+	@Transactional(readOnly = true)
+	public PaginaDTO<AtendimentoResumoDTO> listarPaginado(String referencia, int pagina, int tamanho) {
+		cobrancaRepository.findByReferencia(referencia)
+				.orElseThrow(() -> new java.util.NoSuchElementException("Processo nao encontrado"));
+		if (pagina < 0 || tamanho < 1 || tamanho > 100) throw new IllegalArgumentException("Paginacao invalida");
+		return PaginaDTO.de(atendimentoRepository.findByCobrancaReferencia(referencia,
+				PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.DESC, "realizadoEm"))), this::resumo);
+	}
+
 	private AtendimentoResumoDTO resumo(Atendimento atendimento) {
 		List<AtendimentoResumoDTO.MensagemResumoDTO> mensagens = mensagemRepository
 				.findByAtendimentoIdOrderByEnviadaEmAscIdAsc(atendimento.getId()).stream()
@@ -129,6 +143,7 @@ public class AtendimentoService {
 		return new AtendimentoResumoDTO(atendimento.getId(), atendimento.getCanal().name(),
 				atendimento.getResultado().name(), atendimento.getObservacao(), atendimento.getProximaAcao(),
 				atendimento.getOperadorNome(), atendimento.getOperadorIdentificador(), atendimento.getRealizadoEm(),
-				mensagens);
+				mensagens, atendimento.getDuracaoSegundos(), atendimento.getRetornoAgendadoEm(),
+				atendimento.getPromessaId(), atendimento.getAcordoId(), atendimento.getAgendamentoId());
 	}
 }

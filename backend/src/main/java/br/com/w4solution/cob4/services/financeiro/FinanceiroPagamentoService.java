@@ -1,10 +1,14 @@
 package br.com.w4solution.cob4.services.financeiro;
 import br.com.w4solution.cob4.domain.*;
 import br.com.w4solution.cob4.dto.financeiro.*;
+import br.com.w4solution.cob4.dto.api.PaginaDTO;
 import br.com.w4solution.cob4.repositories.*;
 import br.com.w4solution.cob4.security.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import java.math.*;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -14,10 +18,12 @@ public class FinanceiroPagamentoService {
 	private final PagamentoFinanceiroRepository pagamentos; private final CobrancaRepository cobrancas;
 	private final AcordoFinanceiroRepository acordos; private final AtendimentoAnexoRepository anexos;
 	private final ParcelaAcordoRepository parcelas; private final UsuarioAtualService usuarios;
+	private final CarteiraAccessService carteiraAccess;
 	public FinanceiroPagamentoService(PagamentoFinanceiroRepository p,CobrancaRepository c,AcordoFinanceiroRepository a,
-			AtendimentoAnexoRepository an,ParcelaAcordoRepository pa,UsuarioAtualService u){pagamentos=p;cobrancas=c;acordos=a;anexos=an;parcelas=pa;usuarios=u;}
+			AtendimentoAnexoRepository an,ParcelaAcordoRepository pa,UsuarioAtualService u,CarteiraAccessService ca){pagamentos=p;cobrancas=c;acordos=a;anexos=an;parcelas=pa;usuarios=u;carteiraAccess=ca;}
 
 	@Transactional public PagamentoFinanceiroDTO registrar(RegistrarPagamentoFinanceiroDTO d){
+		if(!carteiraAccess.podeAcessar(d.cobrancaReferencia()))throw new AccessDeniedException("Usuario nao pode registrar pagamento fora da propria carteira");
 		return pagamentos.findByChaveIdempotencia(d.chaveIdempotencia()).map(this::dto).orElseGet(()->{
 			Cobranca c=cobrancas.findByReferencia(d.cobrancaReferencia()).orElseThrow(()->new IllegalArgumentException("Cobranca nao encontrada"));
 			AtendimentoAnexo an=anexos.findById(d.comprovanteId()).orElseThrow(()->new IllegalArgumentException("Comprovante nao encontrado"));
@@ -41,6 +47,7 @@ public class FinanceiroPagamentoService {
 		p.setStatus(PagamentoFinanceiro.Status.ESTORNADO);p.setObservacao((p.getObservacao()==null?"":p.getObservacao()+" | ")+"Estorno: "+motivo+" por "+u.identificador());return dto(pagamentos.save(p));
 	}
 	@Transactional(readOnly=true) public List<PagamentoFinanceiroDTO> listar(String ref){return pagamentos.findByCobrancaReferenciaOrderByRegistradoEmDesc(ref).stream().map(this::dto).toList();}
+	@Transactional(readOnly=true) public PaginaDTO<PagamentoFinanceiroDTO> listarPagina(String ref,int pagina,int tamanho){return PaginaDTO.de(pagamentos.findByCobrancaReferencia(ref,PageRequest.of(pagina,tamanho,Sort.by(Sort.Direction.DESC,"registradoEm"))),this::dto);}
 	private void alocarAcordo(PagamentoFinanceiro p){BigDecimal restante=p.getValor();for(var pa:parcelas.findByAcordoIdOrderByNumeroAsc(p.getAcordo().getId())){if(restante.signum()==0)break;BigDecimal saldo=pa.getTotal().subtract(pa.getValorPago());if(saldo.signum()<=0)continue;BigDecimal uso=restante.min(saldo);PagamentoAlocacao al=componentes(p,pa,uso);p.getAlocacoes().add(al);pa.setValorPago(pa.getValorPago().add(uso));pa.setStatus(pa.getValorPago().compareTo(pa.getTotal())>=0?ParcelaAcordo.Status.PAGA:ParcelaAcordo.Status.PARCIAL);restante=restante.subtract(uso);}p.setCreditoExcedente(restante);
 		BigDecimal aplicado=p.getValor().subtract(restante);BigDecimal totalPrincipal=p.getAcordo().getItens().stream().map(AcordoItem::getPrincipal).reduce(BigDecimal.ZERO,BigDecimal::add);for(var i:p.getAcordo().getItens()){BigDecimal rateio=totalPrincipal.signum()==0?BigDecimal.ZERO:aplicado.multiply(i.getPrincipal()).divide(totalPrincipal,2,RoundingMode.HALF_UP);i.getCobranca().setValorTotal(i.getCobranca().getValorTotal().subtract(rateio).max(BigDecimal.ZERO));}
 		boolean quitado=p.getAcordo().getParcelas().stream().allMatch(x->x.getStatus()==ParcelaAcordo.Status.PAGA);if(quitado){p.getAcordo().setStatus(AcordoFinanceiro.Status.CUMPRIDO);for(var i:p.getAcordo().getItens())encerrar(i.getCobranca());}}

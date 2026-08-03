@@ -2,6 +2,7 @@ package br.com.w4solution.cob4.services.usuario;
 
 import br.com.w4solution.cob4.domain.Usuario;
 import br.com.w4solution.cob4.dto.usuario.*;
+import br.com.w4solution.cob4.dto.api.PaginaDTO;
 import br.com.w4solution.cob4.repositories.UsuarioRepository;
 import br.com.w4solution.cob4.security.PerfilUsuario;
 import br.com.w4solution.cob4.security.UsuarioAtualService;
@@ -13,6 +14,8 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -104,6 +107,11 @@ public class UsuarioService {
 	@Transactional(readOnly = true)
 	public List<UsuarioDTO> listar() {
 		return repository.findAll().stream().map(this::dto).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public PaginaDTO<UsuarioDTO> listarPagina(int pagina, int tamanho) {
+		return PaginaDTO.de(repository.findAll(PageRequest.of(pagina, tamanho, Sort.by("nome").ascending())), this::dto);
 	}
 
 	@Transactional

@@ -30,6 +30,14 @@ public class FluxoController {
 	public FluxoDTO editar(@PathVariable Long id, @Valid @RequestBody FluxoDTO dados) {
 		return fluxoService.salvar(id, dados);
 	}
+	@PostMapping("/{id}/publicar") @PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
+	public FluxoDTO publicar(@PathVariable Long id){return fluxoService.publicar(id);}
+	@PostMapping("/{id}/nova-versao") @PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
+	public FluxoDTO novaVersao(@PathVariable Long id){return fluxoService.novaVersao(id);}
+	@GetMapping("/{id}/validacao") @PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
+	public ValidacaoFluxoDTO validar(@PathVariable Long id){return fluxoService.validarVersao(id);}
+	@PostMapping("/{id}/desativar") @PreAuthorize("hasAnyAuthority('SCOPE_ADMINISTRADOR','SCOPE_GERENTE')")
+	public FluxoDTO desativar(@PathVariable Long id){return fluxoService.desativar(id);}
 
 	@GetMapping("/processos/{referencia}")
 	@PreAuthorize("@carteiraAccess.podeAcessar(#referencia)")

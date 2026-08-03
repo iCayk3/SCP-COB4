@@ -24,7 +24,7 @@ export function Anexos({ processo }) {
 export function Agenda({ processo }) {
   const [itens, setItens] = useState([]); const [erro, setErro] = useState('');
   const [form, setForm] = useState({ titulo: '', inicioEm: '', fimEm: '', observacao: '' });
-  const carregar = () => listarAgenda(processo.referencia).then(setItens).catch(() => setErro('Falha ao consultar agenda.'));
+  const carregar = () => listarAgenda(processo.referencia).then(pagina => setItens(pagina.itens)).catch(() => setErro('Falha ao consultar agenda.'));
   useEffect(carregar, [processo.referencia]);
   const salvar = async () => { setErro(''); try { await criarAgendamento(processo.referencia, { ...form, inicioEm: new Date(form.inicioEm).toISOString(), fimEm: new Date(form.fimEm).toISOString() }); setForm({ titulo: '', inicioEm: '', fimEm: '', observacao: '' }); carregar(); } catch (e) { setErro(e.response?.data?.erro || 'Confira os dados do agendamento.'); } };
   const concluir = async item => { await atualizarAgendamento(processo.referencia, item.id, 'CONCLUIDO'); carregar(); };

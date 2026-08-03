@@ -7,6 +7,8 @@
     "dev": "vite",
     "preview": "vite preview",
     "build": "tsc -b && vite build",
+    "api:generate": "openapi-typescript openapi/sgc-api.json -o src/types/api.generated.ts",
+    "api:check": "openapi-typescript openapi/sgc-api.json -o src/types/api.generated.check.ts && node scripts/check-api-contract.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "fix:prettier": "prettier --write . '!.next' '!.node_modules' '!tools/output/**/.next'"
   },
@@ -59,6 +61,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
+    "openapi-typescript": "^7.10.1",
     "prettier": "3.8.3",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",

@@ -44,8 +44,8 @@ export async function buscarProtocolosDoCliente(cpf) {
   return data;
 }
 
-export async function listarMinhaFila(responsavelIdentificador) {
-  const { data } = await api.get(`/cobrancas/fila/${encodeURIComponent(responsavelIdentificador)}`);
+export async function listarMinhaFila(params = {}) {
+  const { data } = await api.get('/cobrancas/minha-fila/pagina', { params });
   return data;
 }
 
@@ -54,8 +54,18 @@ export async function distribuirFila(payload) {
   return data;
 }
 
-export async function listarTarefas(responsavelIdentificador) {
-  const { data } = await api.get('/cobrancas/tarefas', { params: { responsavelIdentificador } });
+export async function listarTarefas(params = {}) {
+  const { data } = await api.get('/cobrancas/minhas-tarefas/pagina', { params });
+  return data;
+}
+
+export async function buscarProcesso(referencia) {
+  const { data } = await api.get(`/processos/${encodeURIComponent(referencia)}`);
+  return data;
+}
+
+export async function buscarVisao360(cpf) {
+  const { data } = await api.get(`/clientes/${encodeURIComponent(cpf)}/visao-360`);
   return data;
 }
 

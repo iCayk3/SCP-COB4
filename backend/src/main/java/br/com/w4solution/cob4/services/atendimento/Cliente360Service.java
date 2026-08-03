@@ -2,11 +2,14 @@ package br.com.w4solution.cob4.services.atendimento;
 
 import br.com.w4solution.cob4.domain.*;
 import br.com.w4solution.cob4.dto.atendimento.*;
+import br.com.w4solution.cob4.dto.api.PaginaDTO;
 import br.com.w4solution.cob4.repositories.*;
 import br.com.w4solution.cob4.security.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -40,6 +43,7 @@ public class Cliente360Service {
 	@Transactional(readOnly=true) public AtendimentoAnexo baixar(String ref,Long id){ processo(ref); var a=anexos.findById(id).orElseThrow(); if(!a.getCobranca().getReferencia().equals(ref)) throw new NoSuchElementException(); var u=usuarioAtual.atual(); if(a.getClassificacao()==AtendimentoAnexo.Classificacao.COMPROVANTE&&!Set.of(PerfilUsuario.FINANCEIRO,PerfilUsuario.SUPERVISOR,PerfilUsuario.GERENTE,PerfilUsuario.ADMINISTRADOR).contains(u.perfil()))throw new org.springframework.security.access.AccessDeniedException("Comprovante restrito ao financeiro e gestão"); if(a.isCriptografado())a.setConteudo(criptografia.descriptografar(a.getConteudo())); auditoria.registrar("ANEXO_LIDO",u.nome(),u.identificador(),"Anexo "+id+" lido no processo "+ref); return a; }
 	@Transactional public AgendaResumo agendar(String ref,AgendaDTO d){ if(!d.fimEm().isAfter(d.inicioEm())) throw new IllegalArgumentException("Fim deve ser posterior ao início"); var a=new AgendamentoAtendimento(); a.setCobranca(processo(ref)); a.setTitulo(d.titulo().trim()); a.setObservacao(d.observacao()); a.setInicioEm(d.inicioEm()); a.setFimEm(d.fimEm()); a.setResponsavel(usuarioAtual.atual().identificador()); a.setCriadoEm(OffsetDateTime.now()); return ag(agenda.save(a)); }
 	@Transactional(readOnly=true) public List<AgendaResumo> listarAgenda(String ref){ processo(ref); return agenda.findByCobrancaReferenciaOrderByInicioEmAsc(ref).stream().map(this::ag).toList(); }
+	@Transactional(readOnly=true) public PaginaDTO<AgendaResumo> listarAgendaPagina(String ref,int pagina,int tamanho){processo(ref);return PaginaDTO.de(agenda.findByCobrancaReferencia(ref,PageRequest.of(pagina,tamanho,Sort.by(Sort.Direction.ASC,"inicioEm"))),this::ag);}
 	@Transactional public AgendaResumo statusAgenda(String ref,Long id,AgendamentoAtendimento.Status status){ processo(ref); var a=agenda.findById(id).orElseThrow(); if(!a.getCobranca().getReferencia().equals(ref)) throw new NoSuchElementException(); a.setStatus(status); return ag(agenda.save(a)); }
 	@Transactional public AtualizacaoResumo solicitar(String cpf,AtualizacaoClienteDTO d){ var c=clientes.findByCpf(cpf).orElseThrow(); if(atualizacoes.existsByClienteIdAndStatus(c.getId(),SolicitacaoAtualizacaoCliente.Status.PENDENTE)) throw new IllegalStateException("Já existe atualização pendente"); var s=new SolicitacaoAtualizacaoCliente(); s.setCliente(c); s.setNovoTelefone(d.telefone()); s.setNovoEmail(d.email()); s.setMotivo(d.motivo().trim()); s.setSolicitadoPor(usuarioAtual.atual().identificador()); s.setSolicitadoEm(OffsetDateTime.now()); return atu(atualizacoes.save(s)); }
 	@Transactional(readOnly=true) public List<AtualizacaoResumo> listarAtualizacoes(String cpf){ return atualizacoes.findByClienteCpfOrderBySolicitadoEmDesc(cpf).stream().map(this::atu).toList(); }

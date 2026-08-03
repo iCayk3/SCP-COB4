@@ -40,7 +40,7 @@ export default function Conversation({ handleOpen, processo }) {
     setHistorico([]);
     setErro('');
     if (processo) {
-      listarAtendimentos(processo.referencia).then(setHistorico)
+      listarAtendimentos(processo.referencia).then(pagina => setHistorico(pagina.itens))
         .catch(() => setErro('Nao foi possivel consultar o historico deste processo.'));
     }
   }, [processo]);

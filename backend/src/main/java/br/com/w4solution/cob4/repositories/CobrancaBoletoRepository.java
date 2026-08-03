@@ -17,6 +17,7 @@ public interface CobrancaBoletoRepository extends JpaRepository<CobrancaBoleto, 
 	List<CobrancaBoleto> findAllByRbxDocumentoIn(Collection<String> referencias);
 	List<CobrancaBoleto> findByAtivoTrue();
 	long countByCobrancaAndAtivoTrue(Cobranca cobranca);
+	List<CobrancaBoleto> findByCobrancaOrderByVencimentoAsc(Cobranca cobranca);
 
 	@Query("select coalesce(sum(b.valor), 0) from CobrancaBoleto b where b.cobranca = :cobranca and b.ativo = true")
 	BigDecimal somarPorCobranca(@Param("cobranca") Cobranca cobranca);

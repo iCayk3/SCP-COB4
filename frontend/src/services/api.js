@@ -6,6 +6,9 @@ export const api = axios.create({
   withCredentials: true
 });
 
+api.defaults.xsrfCookieName = 'XSRF-TOKEN';
+api.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
+
 api.interceptors.response.use(
   response => response,
   error => {

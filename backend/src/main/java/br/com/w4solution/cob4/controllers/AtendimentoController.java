@@ -30,4 +30,12 @@ public class AtendimentoController {
 	public List<AtendimentoResumoDTO> listar(@PathVariable String referencia) {
 		return service.listar(referencia);
 	}
+
+	@GetMapping("/pagina")
+	@PreAuthorize("@carteiraAccess.podeAcessar(#referencia)")
+	public br.com.w4solution.cob4.dto.api.PaginaDTO<AtendimentoResumoDTO> listarPaginado(
+			@PathVariable String referencia, @RequestParam(defaultValue = "0") int pagina,
+			@RequestParam(defaultValue = "30") int tamanho) {
+		return service.listarPaginado(referencia, pagina, Math.min(Math.max(tamanho, 1), 100));
+	}
 }

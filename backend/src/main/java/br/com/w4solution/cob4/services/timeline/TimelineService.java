@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import br.com.w4solution.cob4.dto.api.PaginaDTO;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class TimelineService {
@@ -29,6 +32,16 @@ public class TimelineService {
 		}
 		return timelineRepository.findByCobrancaReferenciaOrderByCriadoEmAscIdAsc(referencia)
 				.stream().map(this::resumo).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public PaginaDTO<EventoTimelineDTO> listarPaginado(String referencia, int pagina, int tamanho) {
+		cobrancaRepository.findByReferencia(referencia)
+				.orElseThrow(() -> new java.util.NoSuchElementException("Processo nao encontrado"));
+		if (pagina < 0 || tamanho < 1 || tamanho > 100) throw new IllegalArgumentException("Paginacao invalida");
+		return PaginaDTO.de(timelineRepository.findByCobrancaReferencia(referencia,
+				PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.DESC, "criadoEm").and(Sort.by(Sort.Direction.DESC, "id")))),
+				this::resumo);
 	}
 
 	@Transactional

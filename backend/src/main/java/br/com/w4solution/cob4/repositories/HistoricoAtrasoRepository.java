@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface HistoricoAtrasoRepository extends JpaRepository<HistoricoAtraso, Long> {
+	java.util.List<HistoricoAtraso> findByDataPagamentoBetween(java.time.LocalDate inicio, java.time.LocalDate fim);
 	Optional<HistoricoAtraso> findByBoletoReferencia(String boletoReferencia);
 	List<HistoricoAtraso> findAllByBoletoReferenciaIn(Collection<String> referencias);
 	List<HistoricoAtraso> findByContratoReferenciaAndCpfAndDataPagamentoIsNull(String contratoReferencia, String cpf);

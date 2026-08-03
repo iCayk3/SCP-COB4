@@ -2,8 +2,12 @@ package br.com.w4solution.cob4.services.financeiro;
 
 import br.com.w4solution.cob4.domain.*;
 import br.com.w4solution.cob4.dto.financeiro.*;
+import br.com.w4solution.cob4.dto.api.PaginaDTO;
 import br.com.w4solution.cob4.repositories.*;
 import br.com.w4solution.cob4.security.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,11 +21,14 @@ public class AcordoFinanceiroService {
 	private final CobrancaRepository cobrancaRepository;
 	private final PoliticaFinanceiraRepository politicaRepository;
 	private final UsuarioAtualService usuarioAtualService;
+	private final CarteiraAccessService carteiraAccess;
 
 	public AcordoFinanceiroService(AcordoFinanceiroRepository acordoRepository, CobrancaRepository cobrancaRepository,
-			PoliticaFinanceiraRepository politicaRepository, UsuarioAtualService usuarioAtualService) {
+			PoliticaFinanceiraRepository politicaRepository, UsuarioAtualService usuarioAtualService,
+			CarteiraAccessService carteiraAccess) {
 		this.acordoRepository = acordoRepository; this.cobrancaRepository = cobrancaRepository;
 		this.politicaRepository = politicaRepository; this.usuarioAtualService = usuarioAtualService;
+		this.carteiraAccess = carteiraAccess;
 	}
 
 	@Transactional(readOnly = true)
@@ -33,6 +40,12 @@ public class AcordoFinanceiroService {
 	@Transactional(readOnly = true)
 	public List<AcordoFinanceiroDTO> listar(String cobrancaReferencia) {
 		return acordoRepository.findByItensCobrancaReferenciaOrderByCriadoEmDesc(cobrancaReferencia).stream().map(this::dto).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public PaginaDTO<AcordoFinanceiroDTO> listarPagina(String referencia, int pagina, int tamanho) {
+		return PaginaDTO.de(acordoRepository.findByItensCobrancaReferencia(referencia,
+				PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.DESC, "criadoEm"))), this::dto);
 	}
 
 	@Transactional
@@ -58,6 +71,7 @@ public class AcordoFinanceiroService {
 	@Transactional
 	public AcordoFinanceiroDTO ativar(String protocolo) {
 		AcordoFinanceiro a = buscar(protocolo);
+		exigirAcesso(a.getItens().stream().map(i -> i.getCobranca().getReferencia()).toList());
 		if (a.getStatus() != AcordoFinanceiro.Status.APROVADO) throw new IllegalStateException("Somente acordo aprovado pode ser ativado");
 		if (OffsetDateTime.now().isAfter(a.getValidoAte())) throw new IllegalStateException("Proposta expirada");
 		a.setStatus(AcordoFinanceiro.Status.ATIVO);
@@ -65,6 +79,7 @@ public class AcordoFinanceiroService {
 	}
 
 	private AcordoFinanceiroDTO montar(CriarAcordoDTO dados, boolean salvar) {
+		exigirAcesso(dados.cobrancas());
 		PoliticaFinanceira p = politicaRepository.findByVigenteTrue().orElseThrow();
 		if (dados.parcelas() > p.getMaximoParcelas()) throw new IllegalArgumentException("Quantidade de parcelas acima da politica");
 		if (dados.cobrancas().size() > 1 && !p.isPermiteMultiplosContratos()) throw new IllegalArgumentException("Politica nao permite varios contratos");
@@ -100,6 +115,11 @@ public class AcordoFinanceiroService {
 		if (exige) a.setSolicitadoEm(OffsetDateTime.now());
 		gerarParcelas(a, parcelado, dados.primeiroVencimento(), p);
 		return dto(salvar ? acordoRepository.save(a) : a);
+	}
+
+	private void exigirAcesso(Collection<String> referencias) {
+		if (referencias.stream().anyMatch(ref -> !carteiraAccess.podeAcessar(ref)))
+			throw new AccessDeniedException("Usuario nao pode negociar processo fora da propria carteira");
 	}
 
 	private void gerarParcelas(AcordoFinanceiro a, BigDecimal valor, LocalDate primeira, PoliticaFinanceira p) {

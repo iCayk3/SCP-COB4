@@ -20,4 +20,11 @@ public class CarteiraAccessService {
 				.map(c -> usuario.identificador().equalsIgnoreCase(c.getResponsavelIdentificador()))
 				.orElse(false);
 	}
+
+	public boolean podeAcessarCliente(String cpf) {
+		var usuario = usuarioAtual.atual();
+		if (usuario.perfil() != PerfilUsuario.OPERADOR) return true;
+		return repository.findByCpfAgregadorOrderByCriadaEmDesc(cpf).stream()
+				.anyMatch(c -> usuario.identificador().equalsIgnoreCase(c.getResponsavelIdentificador()));
+	}
 }

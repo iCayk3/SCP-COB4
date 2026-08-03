@@ -10,4 +10,5 @@ public interface SincronizacaoRbxExecucaoRepository extends JpaRepository<Sincro
 	List<SincronizacaoRbxExecucao> findTop20ByOrderByIniciadaEmDesc();
 	Optional<SincronizacaoRbxExecucao> findFirstByChaveIdempotenciaAndStatusOrderByIdDesc(
 			String chaveIdempotencia, SincronizacaoRbxExecucao.Status status);
+	long countByStatus(SincronizacaoRbxExecucao.Status status);
 }
