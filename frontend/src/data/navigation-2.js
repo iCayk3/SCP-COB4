@@ -4,10 +4,10 @@ export const navigation = [{
   name: 'Operacao SGC',
   Icon: duotone.Invoice,
   children: [{
-    name: 'Visao geral',
-    path: '/dashboard/verificacao'
+    name: 'Area de trabalho',
+    path: '/dashboard'
   }, {
-    name: 'Processos e cobrancas',
+    name: 'Acompanhamento de processos',
     path: '/dashboard/cobrancas'
   }, {
     name: 'Chats',

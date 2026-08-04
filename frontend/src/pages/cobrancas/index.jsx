@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -37,9 +37,10 @@ import AccountBalanceWalletRounded from '@mui/icons-material/AccountBalanceWalle
 import PauseCircleOutlineRounded from '@mui/icons-material/PauseCircleOutlineRounded';
 import PlayCircleOutlineRounded from '@mui/icons-material/PlayCircleOutlineRounded';
 import AccessTimeRounded from '@mui/icons-material/AccessTimeRounded';
-import { listarCobrancasAbertas, pausarSla, retomarSla } from '@/services/cobrancas';
+import { buscarCobrancasParaAtendimento, listarMinhaFila, pausarSla, retomarSla } from '@/services/cobrancas';
 import Conversation from '@/page-sections/chat/conversation';
 import ClientInfoPanel from '@/page-sections/chat/ClientInfoPanel';
+import { useAuth } from '@/hooks/useAuth';
 
 const moeda = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -98,13 +99,17 @@ function Indicador({ titulo, valor, legenda, icone, cor = 'primary.main' }) {
 }
 
 export default function CobrancasPage() {
+  const { user } = useAuth();
+  const visaoGestao = ['administrator', 'administrador', 'gerente', 'supervisor'].includes(user?.role);
   const [cobrancas, setCobrancas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
+  const [buscaAplicada, setBuscaAplicada] = useState('');
   const [atendimento, setAtendimento] = useState(null);
   const [pagina, setPagina] = useState(0);
   const [linhasPorPagina, setLinhasPorPagina] = useState(25);
+  const [totalElementos, setTotalElementos] = useState(0);
   const [acaoSla, setAcaoSla] = useState(null);
   const [motivoSla, setMotivoSla] = useState('');
   const [salvandoSla, setSalvandoSla] = useState(false);
@@ -113,32 +118,35 @@ export default function CobrancasPage() {
     setCarregando(true);
     setErro('');
     try {
-      setCobrancas(await listarCobrancasAbertas());
+      const resultado = visaoGestao
+        ? await buscarCobrancasParaAtendimento({ pagina, tamanho: linhasPorPagina, busca: buscaAplicada })
+        : await listarMinhaFila({
+            pagina,
+            tamanho: linhasPorPagina,
+            busca: buscaAplicada,
+            ordenarPor: 'prioridade',
+            direcao: 'desc'
+          });
+      setCobrancas(resultado.itens || []);
+      setTotalElementos(Number(resultado.totalElementos || 0));
     } catch (error) {
       setErro(error.response?.data?.erro || 'Não foi possível consultar as cobranças no backend.');
     } finally {
       setCarregando(false);
     }
-  }, []);
+  }, [buscaAplicada, linhasPorPagina, pagina, visaoGestao]);
 
   useEffect(() => {
     carregar();
   }, [carregar]);
 
-  const filtradas = useMemo(() => {
-    const termo = busca.trim().toLowerCase().replace(/\D/g, '');
-    const texto = busca.trim().toLowerCase();
-    if (!texto) return cobrancas;
-    return cobrancas.filter(item =>
-      item.cliente?.toLowerCase().includes(texto) ||
-      item.referencia?.toLowerCase().includes(texto) ||
-      item.cpf?.includes(termo)
-    );
-  }, [busca, cobrancas]);
-  const paginaAtual = filtradas.slice(
-    pagina * linhasPorPagina,
-    pagina * linhasPorPagina + linhasPorPagina
-  );
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPagina(0);
+      setBuscaAplicada(busca.trim());
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [busca]);
 
   const total = cobrancas.reduce((soma, item) => soma + Number(item.valorTotal || 0), 0);
   const boletos = cobrancas.reduce((soma, item) => soma + Number(item.quantidadeBoletos || 0), 0);
@@ -165,9 +173,11 @@ export default function CobrancasPage() {
   return <Box className="pt-2 pb-4">
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} mb={3}>
         <Box>
-          <Typography variant="h4">Cobranças RBX</Typography>
+          <Typography variant="h4">Acompanhamento de processos</Typography>
           <Typography color="text.secondary" mt={0.5}>
-            Acompanhe os clientes inadimplentes e os dados já armazenados no sistema.
+            {visaoGestao
+              ? 'Consulte todos os protocolos ativos, prioridades, valores, status e prazos.'
+              : 'Consulte os protocolos da sua carteira, prioridades, valores, status e prazos.'}
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} alignItems="center">
@@ -185,19 +195,20 @@ export default function CobrancasPage() {
 
       <Grid container spacing={3} mb={3}>
         <Grid size={{ xs: 12, md: 3 }}>
-          <Indicador titulo="Protocolos ativos" valor={cobrancas.length} legenda="Um protocolo por contrato"
+          <Indicador titulo="Protocolos ativos" valor={totalElementos}
+            legenda={visaoGestao ? 'Total encontrado na operação' : 'Total encontrado na sua carteira'}
             icone={<PeopleAltRounded />} />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
-          <Indicador titulo="Boletos vinculados" valor={boletos} legenda="Sem duplicar documentos"
+          <Indicador titulo="Boletos na página" valor={boletos} legenda="Vinculados aos protocolos exibidos"
             icone={<ReceiptLongRounded />} cor="warning.main" />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
-          <Indicador titulo="Valor total em aberto" valor={moeda.format(total)} legenda="Soma das cobranças atuais"
+          <Indicador titulo="Valor exibido" valor={moeda.format(total)} legenda="Soma dos processos desta página"
             icone={<AccountBalanceWalletRounded />} cor="success.main" />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
-          <Indicador titulo="SLAs em alerta" valor={slasCriticos} legenda="Protocolos vencidos ou escalonados"
+          <Indicador titulo="SLAs na página" valor={slasCriticos} legenda="Protocolos vencidos ou escalonados"
             icone={<AccessTimeRounded />} cor="error.main" />
         </Grid>
       </Grid>
@@ -208,7 +219,7 @@ export default function CobrancasPage() {
             <Box>
               <Typography variant="h6">Protocolos de cobrança</Typography>
               <Typography variant="body2" color="text.secondary">
-                {filtradas.length} registro(s) exibido(s)
+                {totalElementos} processo(s) encontrado(s)
               </Typography>
             </Box>
             <TextField
@@ -216,7 +227,6 @@ export default function CobrancasPage() {
               value={busca}
               onChange={event => {
                 setBusca(event.target.value);
-                setPagina(0);
               }}
               placeholder="Buscar por nome, CPF ou referência"
               sx={{ width: { xs: '100%', sm: 340 } }}
@@ -252,14 +262,14 @@ export default function CobrancasPage() {
                       <CircularProgress size={30} />
                       <Typography variant="body2" color="text.secondary" mt={1}>Consultando o banco...</Typography>
                     </TableCell>
-                  </TableRow> : filtradas.length === 0 ? <TableRow>
+                  </TableRow> : cobrancas.length === 0 ? <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                       <Typography fontWeight={600}>Nenhuma cobrança encontrada</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Sincronize o RBX ou ajuste o termo pesquisado.
                       </Typography>
                     </TableCell>
-                  </TableRow> : paginaAtual.map(item => <TableRow hover key={item.referencia}
+                  </TableRow> : cobrancas.map(item => <TableRow hover key={item.referencia}
                     onClick={() => setAtendimento(item)}
                     sx={{ cursor: 'pointer', '&:hover .abrir-chat': { opacity: 1 } }}>
                     <TableCell>
@@ -336,7 +346,7 @@ export default function CobrancasPage() {
           </TableContainer>
           <TablePagination
             component="div"
-            count={filtradas.length}
+            count={totalElementos}
             page={pagina}
             onPageChange={(_, novaPagina) => setPagina(novaPagina)}
             rowsPerPage={linhasPorPagina}

@@ -12,7 +12,6 @@ import PremiumOutlined from '@/icons/PremiumOutlined';
 import SettingsOutlined from '@/icons/SettingsOutlined';
 import NotificationOutlined from '@/icons/NotificationOutlined';
 
-// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   NotificationOutlined,
   DeleteOutlined,

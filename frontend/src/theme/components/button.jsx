@@ -8,7 +8,7 @@ export const Button = theme => {
     styleOverrides: {
       root: {
         fontWeight: 500,
-        borderRadius: 10,
+        borderRadius: 6,
         color: 'inherit',
         boxShadow: 'none',
         overflow: 'hidden',
@@ -109,15 +109,16 @@ export const Button = theme => {
       },
       // sizes
       sizeSmall: {
-        padding: '0.25rem .5rem',
-        height: 30,
+        padding: '6px 12px',
+        minHeight: 34,
         lineHeight: 1.5
       },
       sizeMedium: {
-        padding: '6px 14px'
+        padding: '8px 18px',
+        minHeight: 38
       },
       sizeLarge: {
-        padding: '8px 16px',
+        padding: '10px 20px',
         height: 48
       }
     }

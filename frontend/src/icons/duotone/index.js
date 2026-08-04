@@ -43,7 +43,6 @@ import Forward from './Forward';
 import Folder from './Folder';
 import Apps from './Apps';
 
-// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   AdminEcommerce,
   ArrowLeftToLine,
